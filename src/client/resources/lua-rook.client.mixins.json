@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "wiam.luarook.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ClientPlayerNetworkHandlerMixin",
+    "LivingEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

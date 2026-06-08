@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "lua-rook",
+	"version": "0.0.1",
+	"name": "Lua Rook",
+	"description": "This is a client side mod used to load lua script with given api to implement your own feature.",
+	"authors": [
+		"Wiamotit1e"
+	],
+	"contact": {
+	},
+	"license": "MIT",
+	"icon": "assets/lua-rook/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			{
+				"value": "wiam.luarook.LuaRookClient",
+				"adapter": "kotlin"
+			}
+		]
+	},
+	"mixins": [
+		{
+			"config": "lua-rook.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"accessWidener": "lua-rook.accesswidener",
+	"depends": {
+		"fabricloader": "*",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*",
+		"fabric-language-kotlin": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

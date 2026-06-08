@@ -1,0 +1,9 @@
+accessWidener v1 named
+
+accessible method net/minecraft/client/MinecraftClient doAttack ()Z
+
+accessible method net/minecraft/client/MinecraftClient doItemUse ()V
+
+accessible method net/minecraft/client/MinecraftClient handleBlockBreaking (Z)V
+
+accessible method net/minecraft/client/network/PlayerListEntry setLatency (I)V
