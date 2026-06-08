@@ -30,11 +30,24 @@ object LuaRookCommand {
                         .executes { runScript(it) }
                 )
 
+            // /rook unload <name>
+            val unloadNode = ClientCommandManager.literal("unload")
+                .then(
+                    ClientCommandManager.argument("name", StringArgumentType.word())
+                        .suggests { _, builder ->
+                            GlobalsCollector.listNames().forEach { builder.suggest(it) }
+                            builder.buildFuture()
+                        }
+                        .executes { unloadScript(it) }
+                )
+
             // /rook reload
             val reloadNode = ClientCommandManager.literal("reload")
                 .executes { reloadScripts(it) }
 
-            dispatcher.register(root.then(listNode).then(runNode).then(reloadNode))
+            dispatcher.register(
+                root.then(listNode).then(runNode).then(unloadNode).then(reloadNode)
+            )
         }
     }
 
@@ -64,6 +77,18 @@ object LuaRookCommand {
             context.source.sendError(Text.literal("§c[LuaRook] Script not found: $name.lua"))
         }
         return if (success) 1 else 0
+    }
+
+    private fun unloadScript(context: CommandContext<FabricClientCommandSource>): Int {
+        val name = StringArgumentType.getString(context, "name")
+        val removed = GlobalsCollector.remove(name)
+        if (removed != null) {
+            context.source.sendFeedback(Text.literal("§a[LuaRook] Script unloaded: $name"))
+            return 1
+        } else {
+            context.source.sendError(Text.literal("§c[LuaRook] Script not loaded: $name"))
+            return 0
+        }
     }
 
     private fun reloadScripts(context: CommandContext<FabricClientCommandSource>): Int {
