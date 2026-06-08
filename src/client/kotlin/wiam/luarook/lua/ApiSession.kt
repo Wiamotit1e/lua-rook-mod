@@ -9,7 +9,7 @@ import wiam.luarook.lua.api.WorldApi
 
 /**
  * Holds all API instances and their Lua [Globals] for one script.
- * Register with [ApiBridge.register] to activate, [dispose] to clean up.
+ * Register with [ApiBridge.register] to activate event listeners.
  */
 class ApiSession(val name: String) {
 
@@ -19,22 +19,17 @@ class ApiSession(val name: String) {
     val tabList = TabListApi()
     val globals: Globals = JsePlatform.standardGlobals()
 
-    init {
-        chat.scriptName = name
-        world.scriptName = name
-        player.scriptName = name
-        tabList.scriptName = name
+    /** All API instances in registration order. Add new APIs here. */
+    private val all: List<LuaApi> = listOf(chat, player, world, tabList)
 
-        chat.inject(globals)
-        world.inject(globals)
-        player.inject(globals)
-        tabList.inject(globals)
+    init {
+        for (api in all) {
+            api.scriptName = name
+            api.inject(globals)
+        }
     }
 
     fun dispose() {
-        chat.dispose()
-        player.dispose()
-        world.dispose()
-        tabList.dispose()
+        all.forEach { it.dispose() }
     }
 }

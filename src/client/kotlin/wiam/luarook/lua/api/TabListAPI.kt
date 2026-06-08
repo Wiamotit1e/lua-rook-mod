@@ -2,63 +2,51 @@ package wiam.luarook.lua.api
 
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.network.PlayerListEntry
-import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
-import org.luaj.vm2.lib.OneArgFunction
-import org.luaj.vm2.lib.ZeroArgFunction
+import org.luaj.vm2.LuaValue.NIL
+import wiam.luarook.lua.ErrorReporter
+import wiam.luarook.lua.LuaApi
 import wiam.luarook.lua.adapt.text.toLuaTable
 import wiam.luarook.lua.adapt.text.with
-import wiam.luarook.lua.ErrorReporter
 import wiam.luarook.lua.adapt.toLuaTable
 
-class TabListApi {
+class TabListApi : LuaApi("tabList") {
 
-    var scriptName: String = "unknown"
-    
-    private val playerListEntriesModifiedListeners = mutableListOf<LuaValue>()
-    
-    fun inject(globals: Globals) {
-        val tabList = LuaValue.tableOf()
-        tabList["getListedPlayerListEntries"] = object : ZeroArgFunction() {
-            override fun call(): LuaValue {
-                return MinecraftClient.getInstance().networkHandler?.listedPlayerListEntries?.map { it.toLuaTable() }
-                    ?.toLuaTable() ?: NIL
-            }
+    override fun register(t: LuaTable) {
+        t.fn0("getListedPlayerListEntries") {
+            MinecraftClient.getInstance().networkHandler?.listedPlayerListEntries
+                ?.map { it.toLuaTable() }?.toLuaTable() ?: NIL
         }
-        tabList["onPlayerListEntriesModified"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                if (arg.isfunction()) playerListEntriesModifiedListeners.add(arg)
-                return NIL
-            }
-        }
-        globals["tabList"] = tabList
+        t.event("playerListEntriesModified")
     }
-    
-    fun dispose() {
-        playerListEntriesModifiedListeners.clear()
-    }
-    
+
+    /**
+     * Custom fire for tab list modification. Unlike simple events, each listener
+     * receives a copy of the current entry and can return a modified table or nil
+     * (to remove the entry). Listener results are chained: the next listener sees
+     * the previous listener's modifications.
+     */
     internal fun firePlayerListEntryModified(
         entries: MutableList<PlayerListEntry>,
         index: Int,
         entry: PlayerListEntry
     ): PlayerListEntry {
         var current = entry
-        for (listener in playerListEntriesModifiedListeners) {
-            if (!listener.isfunction()) continue
+        for (fn in listeners["playerListEntriesModified"] ?: return current) {
+            if (!fn.isfunction()) continue
             try {
-                val modified = listener.call(current.toLuaTable())
+                val modified = fn.call(current.toLuaTable())
                 if (modified is LuaTable) {
                     entries[index] = current.with(modified)
                     current = entries[index]
                 } else {
-                    // Listener returned nil → remove entry and stop processing further listeners
+                    // Listener returned nil → remove entry and stop
                     entries.removeAt(index)
                     return current
                 }
             } catch (e: Exception) {
-                ErrorReporter.reportRuntimeError(scriptName, "tabList.onPlayerListEntriesModified", e)
+                ErrorReporter.reportRuntimeError(scriptName, "tabList.playerListEntriesModified", e)
             }
         }
         return current
