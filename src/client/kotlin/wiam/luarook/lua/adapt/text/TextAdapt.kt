@@ -23,15 +23,17 @@ fun MutableText.toLuaTable(): LuaTable {
 
 fun LuaTable.toMutableText(): MutableText {
     val content = this@toMutableText.get("content").tojstring()
-    val text = Text.of( content).copy()
-    text.apply {
-        val style = this@toMutableText.get("style") as? LuaTable ?: throw IllegalArgumentException("Invalid style")
-        val siblings =
-            this@toMutableText.get("siblings") as? LuaTable ?: throw IllegalArgumentException("Invalid siblings")
-        this.style = style.toStyle()
-        for (i in 1..siblings.length()) {
-            val sibling = siblings[i] as? LuaTable ?: throw IllegalArgumentException("Invalid sibling")
-            this.append(sibling.toMutableText())
+    val text = Text.of(content).copy()
+    val styleTable = this@toMutableText.get("style") as? LuaTable
+    val siblingsTable = this@toMutableText.get("siblings") as? LuaTable
+
+    if (styleTable != null) {
+        text.style = styleTable.toStyle()
+    }
+    if (siblingsTable != null) {
+        for (i in 1..siblingsTable.length()) {
+            val sibling = siblingsTable[i] as? LuaTable ?: continue
+            text.append(sibling.toMutableText())
         }
     }
     return text

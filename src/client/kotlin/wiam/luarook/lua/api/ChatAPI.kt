@@ -1,164 +1,20 @@
 package wiam.luarook.lua.api
 
-import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
-import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.network.ClientPlayNetworkHandler
-import net.minecraft.text.Text
 import org.luaj.vm2.Globals
-import org.luaj.vm2.LuaError
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
+import org.luaj.vm2.LuaValue.NIL
 import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.TwoArgFunction
-import wiam.luarook.lua.GlobalsCollector
 import wiam.luarook.lua.adapt.text.toMutableText
 
-object ChatAPI {
-    
-    fun inject(globals: Globals) {
-        val chat = LuaTable()
-        chat["sendChatMessage"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                val msg = arg.checkjstring()
-                MinecraftClient.getInstance().execute {
-                    sendChatMessage(msg)
-                }
-                return NIL
-            }
-        }
-        
-        chat["sendChatMessageClientOnly"] = object : TwoArgFunction() {
-            override fun call(arg1: LuaValue, arg2: LuaValue): LuaValue {
-                val msg = arg1 as LuaTable
-                val overlay = arg2.optboolean(false)
-                MinecraftClient.getInstance().execute {
-                    sendChatMessageClientOnly(msg.toMutableText(), overlay)
-                }
-                return NIL
-            }
-        }
-        
-        chat["sendChatCommand"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                val cmd = arg.checkjstring()
-                MinecraftClient.getInstance().execute {
-                    sendChatCommand(cmd)
-                }
-                return NIL
-            }
-        }
-        chat["onChatReceived"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                if (arg.isfunction()) {
-                    chatReceivedListeners.add(arg)
-                }
-                return NIL
-            }
-        }
-        chat["onGameReceived"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                if (arg.isfunction()) {
-                    gameReceivedListeners.add(arg)
-                }
-                return NIL
-            }
-        }
-        chat["onAllowChatReceived"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                if (arg.isfunction()) {
-                    allowChatListeners.add(arg)
-                }
-                return NIL
-            }
-        }
-        chat["onAllowGameReceived"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                if (arg.isfunction()) {
-                    allowGameListeners.add(arg)
-                }
-                return NIL
-            }
-        }
-        chat["onAllowChatSent"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                if (arg.isfunction()) {
-                    allowChatSentListeners.add(arg)
-                }
-                return NIL
-            }
-        }
-        chat["onAllowCommandSent"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                if (arg.isfunction()) {
-                    allowCommandSentListeners.add(arg)
-                }
-                return NIL
-            }
-        }
-        chat["onModifyChatSent"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                if (arg.isfunction()) {
-                    modifyChatSentListeners.add(arg)
-                }
-                return NIL
-            }
-        }
-        chat["onModifyCommandSent"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                if (arg.isfunction()) {
-                    modifyCommandSentListeners.add(arg)
-                }
-                return NIL
-            }
-        }
-        chat["onChatSent"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                if (arg.isfunction()) {
-                    chatSentListeners.add(arg)
-                }
-                return NIL
-            }
-        }
-        chat["onCommandSent"] = object : OneArgFunction() {
-            override fun call(arg: LuaValue): LuaValue {
-                if (arg.isfunction()) {
-                    commandSentListeners.add(arg)
-                }
-                return NIL
-            }
-        }
-        globals["chat"] = chat
-    }
-    
-    init {
-        processChatReceived()
-        processGameReceived()
-        processAllowChatReceived()
-        processAllowGameReceived()
-        processAllowChatSent()
-        processAllowCommandSent()
-        processModifyChatSent()
-        processModifyCommandSent()
-        processChatSent()
-        processCommandSent()
-    }
-    
-    private val clientNetWorkHandler: ClientPlayNetworkHandler?
+class ChatApi {
+
+    private val networkHandler: ClientPlayNetworkHandler?
         get() = MinecraftClient.getInstance().networkHandler
-    
-    private fun sendChatMessage(message: String) {
-        clientNetWorkHandler?.sendChatMessage(message)
-    }
-    
-    private fun sendChatMessageClientOnly(message: Text, overlay: Boolean) {
-        MinecraftClient.getInstance().player?.sendMessage(message, overlay)
-    }
-    
-    private fun sendChatCommand(command: String) {
-        clientNetWorkHandler?.sendChatCommand(command)
-    }
-    
+
     private val chatReceivedListeners = mutableListOf<LuaValue>()
     private val gameReceivedListeners = mutableListOf<LuaValue>()
     private val allowChatListeners = mutableListOf<LuaValue>()
@@ -169,171 +25,123 @@ object ChatAPI {
     private val modifyCommandSentListeners = mutableListOf<LuaValue>()
     private val chatSentListeners = mutableListOf<LuaValue>()
     private val commandSentListeners = mutableListOf<LuaValue>()
-    
-    private fun processChatReceived() {
-        ClientReceiveMessageEvents.CHAT.register { message, _, _, _, _ ->
-            chatReceivedListeners.forEach { listener ->
-                if (listener.isfunction()) {
-                    try {
-                        listener.call(LuaValue.valueOf(message.string))
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+
+    fun inject(globals: Globals) {
+        val chat = LuaTable()
+        chat["sendChatMessage"] = object : OneArgFunction() {
+            override fun call(arg: LuaValue): LuaValue {
+                MinecraftClient.getInstance().execute {
+                    networkHandler?.sendChatMessage(arg.checkjstring())
                 }
+                return NIL
             }
         }
-    }
-    
-    private fun processGameReceived() {
-        ClientReceiveMessageEvents.GAME.register { message, overlay ->
-            gameReceivedListeners.forEach { listener ->
-                if (listener.isfunction()) {
-                    try {
-                        listener.call(LuaValue.valueOf(message.string), LuaValue.valueOf(overlay))
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+        chat["sendChatMessageClientOnly"] = object : TwoArgFunction() {
+            override fun call(arg1: LuaValue, arg2: LuaValue): LuaValue {
+                val msg = arg1 as LuaTable
+                val overlay = arg2.optboolean(false)
+                MinecraftClient.getInstance().execute {
+                    MinecraftClient.getInstance().player
+                        ?.sendMessage(msg.toMutableText(), overlay)
                 }
+                return NIL
             }
         }
-    }
-    
-    private fun processAllowChatReceived() {
-        ClientReceiveMessageEvents.ALLOW_CHAT.register { message, _, _, _, _ ->
-            var result = true
-            allowChatListeners.forEach { listener ->
-                if (listener.isfunction()) {
-                    try {
-                        val value = listener.call(LuaValue.valueOf(message.string))
-                        if (!value.toboolean()) {
-                            result = false
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+        chat["sendChatCommand"] = object : OneArgFunction() {
+            override fun call(arg: LuaValue): LuaValue {
+                MinecraftClient.getInstance().execute {
+                    networkHandler?.sendChatCommand(arg.checkjstring())
                 }
-            }
-            result
-        }
-    }
-    
-    private fun processAllowGameReceived() {
-        ClientReceiveMessageEvents.ALLOW_GAME.register { message, overlay ->
-            var result = true
-            allowGameListeners.forEach { listener ->
-                if (listener.isfunction()) {
-                    try {
-                        val value = listener.call(LuaValue.valueOf(message.string), LuaValue.valueOf(overlay))
-                        if (!value.toboolean()) {
-                            result = false
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            }
-            result
-        }
-        
-    }
-    
-    private fun processAllowChatSent() {
-        ClientSendMessageEvents.ALLOW_CHAT.register { message ->
-            var result = true
-            allowChatSentListeners.forEach { listener ->
-                if (listener.isfunction()) {
-                    try {
-                        val value = listener.call(LuaValue.valueOf(message))
-                        if (!value.toboolean()) {
-                            result = false
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            }
-            result
-        }
-    }
-    
-    private fun processAllowCommandSent() {
-        ClientSendMessageEvents.ALLOW_COMMAND.register { message ->
-            var result = true
-            allowCommandSentListeners.forEach { listener ->
-                if (listener.isfunction()) {
-                    try {
-                        val value = listener.call(LuaValue.valueOf(message))
-                        if (!value.toboolean()) {
-                            result = false
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            }
-            result
-        }
-    }
-    
-    private fun processModifyChatSent() {
-        ClientSendMessageEvents.MODIFY_CHAT.register { message ->
-            var v1 = message
-            modifyChatSentListeners.forEach { listener ->
-                if (listener.isfunction()) {
-                    try {
-                        val value = listener.call(LuaValue.valueOf(v1))
-                        v1 = value.tojstring()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            }
-            v1
-        }
-    }
-    
-    private fun processModifyCommandSent() {
-        ClientSendMessageEvents.MODIFY_COMMAND.register { message ->
-            var v1 = message
-            modifyCommandSentListeners.forEach { listener ->
-                if (listener.isfunction()) {
-                    try {
-                        val value = listener.call(LuaValue.valueOf(v1))
-                        v1 = value.tojstring()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            }
-            v1
-        }
-    }
-    
-    private fun processChatSent() {
-        ClientSendMessageEvents.CHAT.register { message ->
-            chatSentListeners.forEach { listener ->
-                if (listener.isfunction()) {
-                    try {
-                        listener.call(LuaValue.valueOf(message))
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
+                return NIL
             }
         }
+        chat["onChatReceived"] = listenerRegistrar(chatReceivedListeners)
+        chat["onGameReceived"] = listenerRegistrar(gameReceivedListeners)
+        chat["onAllowChatReceived"] = listenerRegistrar(allowChatListeners)
+        chat["onAllowGameReceived"] = listenerRegistrar(allowGameListeners)
+        chat["onAllowChatSent"] = listenerRegistrar(allowChatSentListeners)
+        chat["onAllowCommandSent"] = listenerRegistrar(allowCommandSentListeners)
+        chat["onModifyChatSent"] = listenerRegistrar(modifyChatSentListeners)
+        chat["onModifyCommandSent"] = listenerRegistrar(modifyCommandSentListeners)
+        chat["onChatSent"] = listenerRegistrar(chatSentListeners)
+        chat["onCommandSent"] = listenerRegistrar(commandSentListeners)
+        globals["chat"] = chat
     }
-    
-    private fun processCommandSent() {
-        ClientSendMessageEvents.COMMAND.register { message ->
-            commandSentListeners.forEach { listener ->
-                if (listener.isfunction()) {
-                    try {
-                        listener.call(LuaValue.valueOf(message))
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            }
+
+    fun dispose() {
+        chatReceivedListeners.clear()
+        gameReceivedListeners.clear()
+        allowChatListeners.clear()
+        allowGameListeners.clear()
+        allowChatSentListeners.clear()
+        allowCommandSentListeners.clear()
+        modifyChatSentListeners.clear()
+        modifyCommandSentListeners.clear()
+        chatSentListeners.clear()
+        commandSentListeners.clear()
+    }
+
+    // ---- Internal: called by ApiBridge ----
+
+    internal fun fireChatReceived(message: String) =
+        chatReceivedListeners.forEach { safeCall1(it, LuaValue.valueOf(message)) }
+
+    internal fun fireGameReceived(message: String, overlay: Boolean) =
+        gameReceivedListeners.forEach { safeCall2(it, LuaValue.valueOf(message), LuaValue.valueOf(overlay)) }
+
+    internal fun fireAllowChatReceived(message: String): Boolean =
+        allowChatListeners.all { safeCallBool1(it, LuaValue.valueOf(message)) }
+
+    internal fun fireAllowGameReceived(message: String, overlay: Boolean): Boolean =
+        allowGameListeners.all { safeCallBool2(it, LuaValue.valueOf(message), LuaValue.valueOf(overlay)) }
+
+    internal fun fireAllowChatSent(message: String): Boolean =
+        allowChatSentListeners.all { safeCallBool1(it, LuaValue.valueOf(message)) }
+
+    internal fun fireAllowCommandSent(message: String): Boolean =
+        allowCommandSentListeners.all { safeCallBool1(it, LuaValue.valueOf(message)) }
+
+    internal fun fireModifyChatSent(message: String): String {
+        var result = message
+        modifyChatSentListeners.forEach { result = safeCallString1(it, LuaValue.valueOf(result)) }
+        return result
+    }
+
+    internal fun fireModifyCommandSent(message: String): String {
+        var result = message
+        modifyCommandSentListeners.forEach { result = safeCallString1(it, LuaValue.valueOf(result)) }
+        return result
+    }
+
+    internal fun fireChatSent(message: String) =
+        chatSentListeners.forEach { safeCall1(it, LuaValue.valueOf(message)) }
+
+    internal fun fireCommandSent(message: String) =
+        commandSentListeners.forEach { safeCall1(it, LuaValue.valueOf(message)) }
+
+    // ---- Helpers ----
+
+    private fun listenerRegistrar(list: MutableList<LuaValue>) = object : OneArgFunction() {
+        override fun call(arg: LuaValue): LuaValue {
+            if (arg.isfunction()) list.add(arg)
+            return NIL
         }
     }
+
+    private fun safeCall1(fn: LuaValue, a: LuaValue) {
+        try { fn.call(a) } catch (e: Exception) { e.printStackTrace() }
+    }
+
+    private fun safeCall2(fn: LuaValue, a: LuaValue, b: LuaValue) {
+        try { fn.call(a, b) } catch (e: Exception) { e.printStackTrace() }
+    }
+
+    private fun safeCallBool1(fn: LuaValue, a: LuaValue): Boolean =
+        try { fn.call(a).toboolean() } catch (e: Exception) { e.printStackTrace(); true }
+
+    private fun safeCallBool2(fn: LuaValue, a: LuaValue, b: LuaValue): Boolean =
+        try { fn.call(a, b).toboolean() } catch (e: Exception) { e.printStackTrace(); true }
+
+    private fun safeCallString1(fn: LuaValue, a: LuaValue): String =
+        try { fn.call(a).tojstring() } catch (e: Exception) { e.printStackTrace(); a.tojstring() }
 }

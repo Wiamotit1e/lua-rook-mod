@@ -1,7 +1,6 @@
 package wiam.luarook.lua
 
 import net.fabricmc.loader.api.FabricLoader
-import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaError
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
@@ -83,14 +82,16 @@ object ScriptLoader {
             return
         }
 
-        val globals: Globals = createRegularGlobals()
+        val session = ApiSession(name)
         try {
-            globals.load(code).call()
-            GlobalsCollector.allGlobals[name] = globals
+            session.globals.load(code).call()
+            GlobalsCollector.put(name, session)
             logger.info("Loaded script: $name")
         } catch (e: LuaError) {
+            session.dispose()
             logger.error("Lua syntax error in $name.lua: ${e.message}")
         } catch (e: Exception) {
+            session.dispose()
             logger.error("Failed to execute script: $name.lua", e)
         }
     }

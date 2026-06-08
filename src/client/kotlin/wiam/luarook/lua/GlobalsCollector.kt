@@ -3,13 +3,31 @@ package wiam.luarook.lua
 import org.luaj.vm2.Globals
 
 object GlobalsCollector {
-    val allGlobals = mutableMapOf<String, Globals>()
+    private val sessions = mutableMapOf<String, ApiSession>()
 
-    fun get(name: String): Globals? = allGlobals[name]
+    val allGlobals: Map<String, Globals>
+        get() = sessions.mapValues { it.value.globals }
 
-    fun remove(name: String): Globals? = allGlobals.remove(name)
+    fun get(name: String): Globals? = sessions[name]?.globals
 
-    fun listNames(): Set<String> = allGlobals.keys.toSet()
+    fun getSession(name: String): ApiSession? = sessions[name]
 
-    fun clear() = allGlobals.clear()
+    fun put(name: String, session: ApiSession) {
+        sessions[name]?.let { ApiBridge.unregister(it) }
+        sessions[name] = session
+        ApiBridge.register(session)
+    }
+
+    fun remove(name: String): ApiSession? {
+        val session = sessions.remove(name)
+        session?.let { ApiBridge.unregister(it) }
+        return session
+    }
+
+    fun listNames(): Set<String> = sessions.keys.toSet()
+
+    fun clear() {
+        sessions.values.forEach { ApiBridge.unregister(it) }
+        sessions.clear()
+    }
 }
