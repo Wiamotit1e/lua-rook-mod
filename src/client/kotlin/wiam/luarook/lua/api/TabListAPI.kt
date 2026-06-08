@@ -1,19 +1,28 @@
 package wiam.luarook.lua.api
 
+import net.minecraft.client.MinecraftClient
 import net.minecraft.client.network.PlayerListEntry
 import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.lib.OneArgFunction
+import org.luaj.vm2.lib.ZeroArgFunction
 import wiam.luarook.lua.adapt.text.toLuaTable
 import wiam.luarook.lua.adapt.text.with
+import wiam.luarook.lua.adapt.toLuaTable
 
 class TabListApi {
-
+    
     private val playerListEntriesModifiedListeners = mutableListOf<LuaValue>()
-
+    
     fun inject(globals: Globals) {
         val tabList = LuaValue.tableOf()
+        tabList["getListedPlayerListEntries"] = object : ZeroArgFunction() {
+            override fun call(): LuaValue {
+                return MinecraftClient.getInstance().networkHandler?.listedPlayerListEntries?.map { it.toLuaTable() }
+                    ?.toLuaTable() ?: NIL
+            }
+        }
         tabList["onPlayerListEntriesModified"] = object : OneArgFunction() {
             override fun call(arg: LuaValue): LuaValue {
                 if (arg.isfunction()) playerListEntriesModifiedListeners.add(arg)
@@ -22,11 +31,11 @@ class TabListApi {
         }
         globals["tabList"] = tabList
     }
-
+    
     fun dispose() {
         playerListEntriesModifiedListeners.clear()
     }
-
+    
     internal fun firePlayerListEntryModified(
         entries: MutableList<PlayerListEntry>,
         index: Int,
