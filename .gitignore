@@ -38,3 +38,6 @@ hs_err_*.log
 replay_*.log
 *.hprof
 *.jfr
+/1.21.11-sourcecode/
+/.claude/
+/.kotlin/
