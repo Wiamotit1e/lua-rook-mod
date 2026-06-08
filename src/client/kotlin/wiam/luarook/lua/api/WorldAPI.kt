@@ -8,9 +8,12 @@ import org.luaj.vm2.LuaValue
 import org.luaj.vm2.LuaValue.NIL
 import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.ZeroArgFunction
+import wiam.luarook.lua.ErrorReporter
 import wiam.luarook.lua.adapt.toLuaTable
 
 class WorldApi {
+
+    var scriptName: String = "unknown"
 
     private val tickStartedListeners = mutableListOf<LuaValue>()
     private val tickEndedListeners = mutableListOf<LuaValue>()
@@ -80,10 +83,14 @@ class WorldApi {
     }
 
     internal fun fireTickStarted() {
-        tickStartedListeners.forEach { fn -> try { fn.call() } catch (e: Exception) { e.printStackTrace() } }
+        tickStartedListeners.forEach { fn ->
+            try { fn.call() } catch (e: Exception) { ErrorReporter.reportRuntimeError(scriptName, "world.onTickStarted", e) }
+        }
     }
 
     internal fun fireTickEnded() {
-        tickEndedListeners.forEach { fn -> try { fn.call() } catch (e: Exception) { e.printStackTrace() } }
+        tickEndedListeners.forEach { fn ->
+            try { fn.call() } catch (e: Exception) { ErrorReporter.reportRuntimeError(scriptName, "world.onTickEnded", e) }
+        }
     }
 }

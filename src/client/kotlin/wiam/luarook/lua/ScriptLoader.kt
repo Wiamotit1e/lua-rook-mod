@@ -81,7 +81,7 @@ object ScriptLoader {
         try {
             code = Files.readString(file)
         } catch (e: Exception) {
-            logger.error("Failed to read script: $name.lua", e)
+            ErrorReporter.reportLoadError(name, "Failed to read file: ${e.message}")
             return
         }
 
@@ -92,10 +92,10 @@ object ScriptLoader {
             logger.info("Loaded script: $name")
         } catch (e: LuaError) {
             session.dispose()
-            logger.error("Lua syntax error in $name.lua: ${e.message}")
+            ErrorReporter.reportLoadError(name, e.message ?: "Unknown Lua error")
         } catch (e: Exception) {
             session.dispose()
-            logger.error("Failed to execute script: $name.lua", e)
+            ErrorReporter.reportLoadError(name, e.message ?: "Unknown error")
         }
     }
 

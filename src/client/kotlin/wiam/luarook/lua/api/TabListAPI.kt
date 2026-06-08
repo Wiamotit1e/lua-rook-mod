@@ -9,9 +9,12 @@ import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.ZeroArgFunction
 import wiam.luarook.lua.adapt.text.toLuaTable
 import wiam.luarook.lua.adapt.text.with
+import wiam.luarook.lua.ErrorReporter
 import wiam.luarook.lua.adapt.toLuaTable
 
 class TabListApi {
+
+    var scriptName: String = "unknown"
     
     private val playerListEntriesModifiedListeners = mutableListOf<LuaValue>()
     
@@ -55,7 +58,7 @@ class TabListApi {
                     return current
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorReporter.reportRuntimeError(scriptName, "tabList.onPlayerListEntriesModified", e)
             }
         }
         return current

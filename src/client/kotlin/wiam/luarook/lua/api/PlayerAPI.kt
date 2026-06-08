@@ -10,10 +10,13 @@ import org.luaj.vm2.LuaValue.NIL
 import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.ThreeArgFunction
 import org.luaj.vm2.lib.ZeroArgFunction
+import wiam.luarook.lua.ErrorReporter
 import wiam.luarook.lua.adapt.toLuaTable
 import wiam.luarook.toSlotActionType
 
 class PlayerApi {
+
+    var scriptName: String = "unknown"
 
     var blockAttackingStatus = false
         private set
@@ -126,14 +129,20 @@ class PlayerApi {
     }
 
     internal fun fireDamaged(source: DamageSource) {
-        damagedListeners.forEach { fn -> try { fn.call(source.toLuaTable()) } catch (e: Exception) { e.printStackTrace() } }
+        damagedListeners.forEach { fn ->
+            try { fn.call(source.toLuaTable()) } catch (e: Exception) { ErrorReporter.reportRuntimeError(scriptName, "player.onDamaged", e) }
+        }
     }
 
     internal fun fireDeath(source: DamageSource) {
-        deathListeners.forEach { fn -> try { fn.call(source.toLuaTable()) } catch (e: Exception) { e.printStackTrace() } }
+        deathListeners.forEach { fn ->
+            try { fn.call(source.toLuaTable()) } catch (e: Exception) { ErrorReporter.reportRuntimeError(scriptName, "player.onDeath", e) }
+        }
     }
 
     internal fun fireClientTick() {
-        tickListeners.forEach { fn -> try { fn.call() } catch (e: Exception) { e.printStackTrace() } }
+        tickListeners.forEach { fn ->
+            try { fn.call() } catch (e: Exception) { ErrorReporter.reportRuntimeError(scriptName, "player.onClientTick", e) }
+        }
     }
 }

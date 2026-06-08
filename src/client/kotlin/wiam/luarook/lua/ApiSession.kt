@@ -20,6 +20,11 @@ class ApiSession(val name: String) {
     val globals: Globals = JsePlatform.standardGlobals()
 
     init {
+        chat.scriptName = name
+        world.scriptName = name
+        player.scriptName = name
+        tabList.scriptName = name
+
         chat.inject(globals)
         world.inject(globals)
         player.inject(globals)

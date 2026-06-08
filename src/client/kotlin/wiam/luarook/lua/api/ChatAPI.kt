@@ -8,9 +8,12 @@ import org.luaj.vm2.LuaValue
 import org.luaj.vm2.LuaValue.NIL
 import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.TwoArgFunction
+import wiam.luarook.lua.ErrorReporter
 import wiam.luarook.lua.adapt.text.toMutableText
 
 class ChatApi {
+
+    var scriptName: String = "unknown"
 
     private val networkHandler: ClientPlayNetworkHandler?
         get() = MinecraftClient.getInstance().networkHandler
@@ -84,40 +87,40 @@ class ChatApi {
     // ---- Internal: called by ApiBridge ----
 
     internal fun fireChatReceived(message: String) =
-        chatReceivedListeners.forEach { safeCall1(it, LuaValue.valueOf(message)) }
+        chatReceivedListeners.forEach { safeCall1(it, LuaValue.valueOf(message), "chat.onChatReceived") }
 
     internal fun fireGameReceived(message: String, overlay: Boolean) =
-        gameReceivedListeners.forEach { safeCall2(it, LuaValue.valueOf(message), LuaValue.valueOf(overlay)) }
+        gameReceivedListeners.forEach { safeCall2(it, LuaValue.valueOf(message), LuaValue.valueOf(overlay), "chat.onGameReceived") }
 
     internal fun fireAllowChatReceived(message: String): Boolean =
-        allowChatListeners.all { safeCallBool1(it, LuaValue.valueOf(message)) }
+        allowChatListeners.all { safeCallBool1(it, LuaValue.valueOf(message), "chat.onAllowChatReceived") }
 
     internal fun fireAllowGameReceived(message: String, overlay: Boolean): Boolean =
-        allowGameListeners.all { safeCallBool2(it, LuaValue.valueOf(message), LuaValue.valueOf(overlay)) }
+        allowGameListeners.all { safeCallBool2(it, LuaValue.valueOf(message), LuaValue.valueOf(overlay), "chat.onAllowGameReceived") }
 
     internal fun fireAllowChatSent(message: String): Boolean =
-        allowChatSentListeners.all { safeCallBool1(it, LuaValue.valueOf(message)) }
+        allowChatSentListeners.all { safeCallBool1(it, LuaValue.valueOf(message), "chat.onAllowChatSent") }
 
     internal fun fireAllowCommandSent(message: String): Boolean =
-        allowCommandSentListeners.all { safeCallBool1(it, LuaValue.valueOf(message)) }
+        allowCommandSentListeners.all { safeCallBool1(it, LuaValue.valueOf(message), "chat.onAllowCommandSent") }
 
     internal fun fireModifyChatSent(message: String): String {
         var result = message
-        modifyChatSentListeners.forEach { result = safeCallString1(it, LuaValue.valueOf(result)) }
+        modifyChatSentListeners.forEach { result = safeCallString1(it, LuaValue.valueOf(result), "chat.onModifyChatSent") }
         return result
     }
 
     internal fun fireModifyCommandSent(message: String): String {
         var result = message
-        modifyCommandSentListeners.forEach { result = safeCallString1(it, LuaValue.valueOf(result)) }
+        modifyCommandSentListeners.forEach { result = safeCallString1(it, LuaValue.valueOf(result), "chat.onModifyCommandSent") }
         return result
     }
 
     internal fun fireChatSent(message: String) =
-        chatSentListeners.forEach { safeCall1(it, LuaValue.valueOf(message)) }
+        chatSentListeners.forEach { safeCall1(it, LuaValue.valueOf(message), "chat.onChatSent") }
 
     internal fun fireCommandSent(message: String) =
-        commandSentListeners.forEach { safeCall1(it, LuaValue.valueOf(message)) }
+        commandSentListeners.forEach { safeCall1(it, LuaValue.valueOf(message), "chat.onCommandSent") }
 
     // ---- Helpers ----
 
@@ -128,20 +131,20 @@ class ChatApi {
         }
     }
 
-    private fun safeCall1(fn: LuaValue, a: LuaValue) {
-        try { fn.call(a) } catch (e: Exception) { e.printStackTrace() }
+    private fun safeCall1(fn: LuaValue, a: LuaValue, context: String) {
+        try { fn.call(a) } catch (e: Exception) { ErrorReporter.reportRuntimeError(scriptName, context, e) }
     }
 
-    private fun safeCall2(fn: LuaValue, a: LuaValue, b: LuaValue) {
-        try { fn.call(a, b) } catch (e: Exception) { e.printStackTrace() }
+    private fun safeCall2(fn: LuaValue, a: LuaValue, b: LuaValue, context: String) {
+        try { fn.call(a, b) } catch (e: Exception) { ErrorReporter.reportRuntimeError(scriptName, context, e) }
     }
 
-    private fun safeCallBool1(fn: LuaValue, a: LuaValue): Boolean =
-        try { fn.call(a).toboolean() } catch (e: Exception) { e.printStackTrace(); true }
+    private fun safeCallBool1(fn: LuaValue, a: LuaValue, context: String): Boolean =
+        try { fn.call(a).toboolean() } catch (e: Exception) { ErrorReporter.reportRuntimeError(scriptName, context, e); true }
 
-    private fun safeCallBool2(fn: LuaValue, a: LuaValue, b: LuaValue): Boolean =
-        try { fn.call(a, b).toboolean() } catch (e: Exception) { e.printStackTrace(); true }
+    private fun safeCallBool2(fn: LuaValue, a: LuaValue, b: LuaValue, context: String): Boolean =
+        try { fn.call(a, b).toboolean() } catch (e: Exception) { ErrorReporter.reportRuntimeError(scriptName, context, e); true }
 
-    private fun safeCallString1(fn: LuaValue, a: LuaValue): String =
-        try { fn.call(a).tojstring() } catch (e: Exception) { e.printStackTrace(); a.tojstring() }
+    private fun safeCallString1(fn: LuaValue, a: LuaValue, context: String): String =
+        try { fn.call(a).tojstring() } catch (e: Exception) { ErrorReporter.reportRuntimeError(scriptName, context, e); a.tojstring() }
 }
