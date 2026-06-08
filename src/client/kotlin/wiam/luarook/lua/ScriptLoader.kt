@@ -31,14 +31,17 @@ object ScriptLoader {
 
     fun loadAll() {
         ensureScriptsDir()
-        createExampleScript()
+
         val luaFiles = Files.list(scriptsDir)
             .filter { it.fileName.toString().endsWith(".lua") }
             .sorted()
             .toList()
-
+        
         if (luaFiles.isEmpty()) {
-            logger.warn("No .lua files found in $scriptsDir")
+            createExampleScript()
+            logger.info("No .lua files found, created example.lua")
+            val exampleFile = scriptsDir.resolve("example.lua")
+            loadScriptFile(exampleFile)
             return
         }
 
