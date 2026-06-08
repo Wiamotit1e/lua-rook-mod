@@ -42,19 +42,20 @@ class TabListApi {
         entry: PlayerListEntry
     ): PlayerListEntry {
         var current = entry
-        playerListEntriesModifiedListeners.forEach { listener ->
-            if (listener.isfunction()) {
-                try {
-                    val modified = listener.call(current.toLuaTable())
-                    if (modified is LuaTable) {
-                        entries[index] = current.with(modified)
-                        current = entries[index]
-                    } else {
-                        entries.removeAt(index)
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
+        for (listener in playerListEntriesModifiedListeners) {
+            if (!listener.isfunction()) continue
+            try {
+                val modified = listener.call(current.toLuaTable())
+                if (modified is LuaTable) {
+                    entries[index] = current.with(modified)
+                    current = entries[index]
+                } else {
+                    // Listener returned nil → remove entry and stop processing further listeners
+                    entries.removeAt(index)
+                    return current
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
         return current

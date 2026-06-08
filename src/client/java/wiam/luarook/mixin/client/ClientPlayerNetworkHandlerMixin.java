@@ -18,7 +18,7 @@ public class ClientPlayerNetworkHandlerMixin {
     @Inject(method = "getListedPlayerListEntries", at = @At("RETURN"), cancellable = true)
     public void wiam$getListedPlayerListEntries(CallbackInfoReturnable<Collection<PlayerListEntry>> cir) {
         List<PlayerListEntry> entries = new ArrayList<>(cir.getReturnValue());
-        for (int i = 0; i < entries.size(); i++) {
+        for (int i = entries.size() - 1; i >= 0; i--) {
             ApiBridge.onPlayerListEntriesModified(entries, i, entries.get(i));
         }
         cir.setReturnValue(entries);
