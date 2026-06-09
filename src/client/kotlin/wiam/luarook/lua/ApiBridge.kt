@@ -9,6 +9,7 @@ import net.minecraft.entity.damage.DamageSource
 import org.luaj.vm2.LuaValue
 import wiam.luarook.lua.adapt.toLuaTable
 import wiam.luarook.lua.api.ChatApi
+import wiam.luarook.lua.api.LoggerApi
 import wiam.luarook.lua.api.PlayerApi
 import wiam.luarook.lua.api.TabListApi
 import wiam.luarook.lua.api.WorldApi
@@ -24,12 +25,14 @@ object ApiBridge {
     private val playerApis = mutableListOf<PlayerApi>()
     private val worldApis = mutableListOf<WorldApi>()
     private val tabListApis = mutableListOf<TabListApi>()
+    private val loggerApis = mutableListOf<LoggerApi>()
 
     fun register(session: ApiSession) {
         chatApis.add(session.chat)
         playerApis.add(session.player)
         worldApis.add(session.world)
         tabListApis.add(session.tabList)
+        loggerApis.add(session.logger)
     }
 
     fun unregister(session: ApiSession) {
@@ -37,6 +40,7 @@ object ApiBridge {
         playerApis.remove(session.player)
         worldApis.remove(session.world)
         tabListApis.remove(session.tabList)
+        loggerApis.remove(session.logger)
         session.dispose()
     }
 
@@ -45,10 +49,12 @@ object ApiBridge {
         playerApis.toList().forEach { it.dispose() }
         worldApis.toList().forEach { it.dispose() }
         tabListApis.toList().forEach { it.dispose() }
+        loggerApis.toList().forEach { it.dispose() }
         chatApis.clear()
         playerApis.clear()
         worldApis.clear()
         tabListApis.clear()
+        loggerApis.clear()
     }
 
     // ---------- Fabric event registration (called once at mod init) ----------
