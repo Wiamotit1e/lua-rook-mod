@@ -6,10 +6,14 @@ import org.slf4j.LoggerFactory
 
 object ErrorReporter {
     private val logger = LoggerFactory.getLogger("lua-rook/ErrorReporter")
-    
-    private val lastReport = mutableMapOf<String, Long>()
-   
+
     private const val RATE_LIMIT_MS = 5000L
+
+    private val lastReport = object : LinkedHashMap<String, Long>(64, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?): Boolean {
+            return size > 128
+        }
+    }
 
     fun reportLoadError(scriptName: String, message: String) {
         logger.error("Error in $scriptName.lua: $message")
