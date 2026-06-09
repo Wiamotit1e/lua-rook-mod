@@ -50,6 +50,7 @@ fun Entity.toLuaTable(): LuaTable {
     val asItem = if(this is ItemEntity) this.stack.toLuaTable() else LuaValue.NIL
     val table: LuaTable = LuaTable().apply {
         set("id", LuaValue.valueOf(id))
+        set("uuid", LuaValue.valueOf(uuidAsString))
         set("username", username)
         set("type", type)
         set("positionX", LuaValue.valueOf(x))
