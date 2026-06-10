@@ -3,7 +3,7 @@ package wiam.luarook.lua
 import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
-import org.luaj.vm2.LuaValue.NIL
+import org.luaj.vm2.Varargs
 import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.ThreeArgFunction
 import org.luaj.vm2.lib.TwoArgFunction
@@ -143,7 +143,13 @@ abstract class LuaApi(val namespace: String) {
             1 -> call(args[0])
             2 -> call(args[0], args[1])
             3 -> call(args[0], args[1], args[2])
-            else -> invoke(LuaValue.varargsOf(args[0], LuaValue.varargsOf(args[1], args[2]))).arg1()
+            else -> {
+                var tail: Varargs = LuaValue.NIL
+                for (i in args.size - 1 downTo 0) {
+                    tail = LuaValue.varargsOf(args[i], tail)
+                }
+                invoke(tail).arg1()
+            }
         }
     }
 }
