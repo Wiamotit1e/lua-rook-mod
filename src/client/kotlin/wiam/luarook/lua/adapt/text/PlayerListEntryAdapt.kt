@@ -15,13 +15,17 @@ fun PlayerListEntry.toLuaTable(): LuaTable {
 }
 
 fun PlayerListEntry.with(luaTable: LuaTable): PlayerListEntry {
-    val displayName = luaTable.get("displayName") as? LuaTable
-    val latency = luaTable.get("latency").toint()
-    val listOrder = luaTable.get("listOrder").toint()
-    this.apply {
-        this.displayName = displayName?.toMutableText()
-        this.latency = latency
-        this.listOrder = listOrder
+    val displayNameVal = luaTable.get("displayName")
+    if (displayNameVal != LuaValue.NIL) {
+        this.displayName = (displayNameVal as? LuaTable)?.toMutableText()
+    }
+    val latencyVal = luaTable.get("latency")
+    if (latencyVal != LuaValue.NIL) {
+        this.latency = latencyVal.toint()
+    }
+    val listOrderVal = luaTable.get("listOrder")
+    if (listOrderVal != LuaValue.NIL) {
+        this.listOrder = listOrderVal.toint()
     }
     return this
 }
