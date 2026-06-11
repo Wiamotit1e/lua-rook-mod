@@ -39,6 +39,9 @@ class WorldApi : LuaApi("world") {
             val w = mc.world ?: return@fn0 NIL
             LuaValue.valueOf(w.timeOfDay.toDouble())
         }
+        t.fn0("isInScreen") {
+            return@fn0 if (mc.currentScreen != null) LuaValue.TRUE else LuaValue.FALSE
+        }
         t.fn1("logOut") { reason ->
             mc.execute { mc.disconnect(Text.of(reason.tojstring())) }
             NIL

@@ -4,11 +4,15 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.network.PlayerListEntry
+import net.minecraft.client.render.RenderTickCounter
 import net.minecraft.entity.damage.DamageSource
 import org.luaj.vm2.LuaValue
+import wiam.luarook.lua.adapt.drawing.toLuaTable
 import wiam.luarook.lua.adapt.toLuaTable
 import wiam.luarook.lua.api.ChatApi
+import wiam.luarook.lua.api.HudApi
 import wiam.luarook.lua.api.LoggerApi
 import wiam.luarook.lua.api.PlayerApi
 import wiam.luarook.lua.api.TabListApi
@@ -26,6 +30,7 @@ object ApiBridge {
     private val worldApis = mutableListOf<WorldApi>()
     private val tabListApis = mutableListOf<TabListApi>()
     private val loggerApis = mutableListOf<LoggerApi>()
+    private val hudApis = mutableListOf<HudApi>()
 
     fun register(session: ApiSession) {
         chatApis.add(session.chat)
@@ -33,6 +38,7 @@ object ApiBridge {
         worldApis.add(session.world)
         tabListApis.add(session.tabList)
         loggerApis.add(session.logger)
+        hudApis.add(session.hud)
     }
 
     fun unregister(session: ApiSession) {
@@ -41,6 +47,7 @@ object ApiBridge {
         worldApis.remove(session.world)
         tabListApis.remove(session.tabList)
         loggerApis.remove(session.logger)
+        hudApis.remove(session.hud)
         session.dispose()
     }
 
@@ -50,11 +57,13 @@ object ApiBridge {
         worldApis.toList().forEach { it.dispose() }
         tabListApis.toList().forEach { it.dispose() }
         loggerApis.toList().forEach { it.dispose() }
+        hudApis.toList().forEach { it.dispose() }
         chatApis.clear()
         playerApis.clear()
         worldApis.clear()
         tabListApis.clear()
         loggerApis.clear()
+        hudApis.clear()
     }
 
     // ---------- Fabric event registration (called once at mod init) ----------
@@ -188,5 +197,12 @@ object ApiBridge {
         tabListApis.forEach { api ->
             current = api.firePlayerListEntryModified(entries, index, current)
         }
+    }
+    
+    // ---- Called by mixin (InGameHudMixin) ----
+    
+    @JvmStatic
+    fun onHudRendered(context: DrawContext, tickCounter: RenderTickCounter) {
+        hudApis.forEach { it.fireHudRendered( context, tickCounter) }
     }
 }
