@@ -25,6 +25,10 @@ fun DrawContext.drawWith(table: LuaTable) {
         if (v1 !is LuaTable) continue
         if (!v1["type"].isstring()) continue
         when (v1["type"].tojstring()) {
+            "fill_rendering" -> {
+                fill(v1["x1"].toint(), v1["y1"].toint(), v1["x2"].toint(), v1["y2"].toint(), v1["color"].toint())
+            }
+            
             "text_rendering" -> {
                 val v2 = v1["text"] as LuaTable
                 val text = v2.toMutableText()
