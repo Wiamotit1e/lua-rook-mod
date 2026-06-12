@@ -1,13 +1,14 @@
 package wiam.luarook.lua.api
 
 import net.minecraft.client.MinecraftClient
-import net.minecraft.entity.damage.DamageSource
 import org.luaj.vm2.LuaInteger
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.LuaValue.NIL
 import wiam.luarook.lua.LuaApi
+import wiam.luarook.lua.adapt.toItemStackComprehensively
 import wiam.luarook.lua.adapt.toLuaTable
+import wiam.luarook.lua.adapt.toLuaValueComprehensively
 import wiam.luarook.toSlotActionType
 
 class PlayerApi : LuaApi("player") {
@@ -31,6 +32,14 @@ class PlayerApi : LuaApi("player") {
             val table = LuaTable()
             val slots = mc.player?.playerScreenHandler?.slots ?: return@fn0 table
             for (i in slots.indices) table.set(i, slots[i].stack.toLuaTable())
+            table
+        }
+        t.fn0("getInventoryStacksComprehensively") {
+            val table = LuaTable()
+            val slots = mc.player?.playerScreenHandler?.slots ?: return@fn0 table
+            for (i in slots.indices) {
+                table.set(i, slots[i].stack.toLuaValueComprehensively())
+            }
             table
         }
         t.fn0("getSelectedSlot") {

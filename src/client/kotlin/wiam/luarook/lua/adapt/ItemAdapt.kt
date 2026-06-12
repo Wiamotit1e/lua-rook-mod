@@ -1,18 +1,19 @@
 package wiam.luarook.lua.adapt
 
+import com.google.gson.JsonParser
+import com.mojang.serialization.JsonOps
 import net.minecraft.client.MinecraftClient
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.item.ItemStack
 import net.minecraft.registry.Registries
-import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
+import net.minecraft.registry.RegistryOps
 import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
-import kotlin.math.max
 
 fun ItemStack.toLuaTable(): LuaTable {
     val enchantments = LuaTable()
@@ -71,4 +72,22 @@ fun LuaTable.toItemStack(): ItemStack? {
     }
     
     return stack
+}
+
+fun ItemStack.toLuaValueComprehensively(): LuaValue {
+    var v1 = LuaValue.NIL
+    val registryOps = RegistryOps.of(JsonOps.INSTANCE, MinecraftClient.getInstance().world?.registryManager)
+    ItemStack.CODEC.encodeStart(registryOps, this)
+        .ifSuccess {
+            v1 = LuaValue.valueOf(it.toString())
+        }
+        .ifError {
+            v1 = LuaValue.valueOf("error:$it")
+        }
+    return v1
+}
+
+fun LuaValue.toItemStackComprehensively(): ItemStack? {
+    val registryOps = RegistryOps.of(JsonOps.INSTANCE, MinecraftClient.getInstance().world?.registryManager)
+    return ItemStack.CODEC.parse(registryOps, JsonParser.parseString(this.tojstring())).getOrThrow()
 }
