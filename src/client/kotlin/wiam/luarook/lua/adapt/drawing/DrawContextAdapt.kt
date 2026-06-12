@@ -3,8 +3,10 @@ package wiam.luarook.lua.adapt.drawing
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import org.luaj.vm2.LuaTable
+import org.luaj.vm2.LuaValue
 import wiam.luarook.lua.adapt.text.toMutableText
 import wiam.luarook.lua.adapt.toItemStack
+import wiam.luarook.lua.adapt.toItemStackComprehensively
 
 fun DrawContext.toLuaTable(): LuaTable {
     return LuaTable().apply {
@@ -51,9 +53,27 @@ fun DrawContext.drawWith(table: LuaTable) {
                 drawItemWithoutEntity(stack, x, y, seed)
             }
             
+            "item_comprehensively_rendering" -> {
+                val itemValue = v1["item"]
+                val stack = itemValue.toItemStackComprehensively() ?: continue
+                val x = v1["x"].toint()
+                val y = v1["y"].toint()
+                val seed = v1.get("seed")?.toint() ?: 0
+                drawItemWithoutEntity(stack, x, y, seed)
+            }
+            
             "item_overlay_rendering" -> {
                 val itemTable = v1["item"] as? LuaTable ?: continue
                 val stack = itemTable.toItemStack() ?: continue
+                val x = v1["x"].toint()
+                val y = v1["y"].toint()
+                val countText = v1.get("countText")?.tojstring()
+                drawStackOverlay(mc.textRenderer, stack, x, y, countText)
+            }
+            
+            "item_comprehensively_overlay_rendering" -> {
+                val itemValue = v1["item"]
+                val stack = itemValue.toItemStackComprehensively() ?: continue
                 val x = v1["x"].toint()
                 val y = v1["y"].toint()
                 val countText = v1.get("countText")?.tojstring()
