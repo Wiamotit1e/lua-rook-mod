@@ -41,3 +41,7 @@ replay_*.log
 /1.21.11-sourcecode/
 /.claude/
 /.kotlin/
+/node_modules/
+/package.json
+/package-lock.json
+/API_REFERENCE.md

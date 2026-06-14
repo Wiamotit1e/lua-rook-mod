@@ -1,6 +1,7 @@
 package wiam.luarook.lua.api
 
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gui.screen.ingame.HandledScreen
 import net.minecraft.text.Text
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
@@ -42,6 +43,9 @@ class WorldApi : LuaApi("world") {
         t.fn0("isInScreen") {
             return@fn0 if (mc.currentScreen != null) LuaValue.TRUE else LuaValue.FALSE
         }
+        t.fn0("isInHandledScreen", {
+            return@fn0 if (mc.currentScreen is HandledScreen<*>) LuaValue.TRUE else LuaValue.FALSE
+        })
         t.fn1("logOut") { reason ->
             mc.execute { mc.disconnect(Text.of(reason.tojstring())) }
             NIL

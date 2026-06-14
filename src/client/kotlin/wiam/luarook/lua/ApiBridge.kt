@@ -9,61 +9,33 @@ import net.minecraft.client.network.PlayerListEntry
 import net.minecraft.client.render.RenderTickCounter
 import net.minecraft.entity.damage.DamageSource
 import org.luaj.vm2.LuaValue
-import wiam.luarook.lua.adapt.drawing.toLuaTable
 import wiam.luarook.lua.adapt.toLuaTable
-import wiam.luarook.lua.api.ChatApi
-import wiam.luarook.lua.api.HudApi
-import wiam.luarook.lua.api.LoggerApi
-import wiam.luarook.lua.api.PlayerApi
-import wiam.luarook.lua.api.TabListApi
-import wiam.luarook.lua.api.WorldApi
 
 /**
  * Central event dispatcher. Registers all Fabric events ONCE (via [initialize]),
- * then delegates to active API instances via generic [LuaApi.fire] / [LuaApi.fireAll]
- * / [LuaApi.fireModify] methods.
+ * then delegates to active [ApiSession] instances.
+ *
+ * A single [MutableList] of sessions is the **only** state — event handlers
+ * reach the correct API via the session property (e.g. `s.chat`, `s.hud`).
+ * Adding a new API requires adding a field to [ApiSession] and wiring Fabric
+ * events here — but there is **no** separate list to forget.
  */
 object ApiBridge {
 
-    private val chatApis = mutableListOf<ChatApi>()
-    private val playerApis = mutableListOf<PlayerApi>()
-    private val worldApis = mutableListOf<WorldApi>()
-    private val tabListApis = mutableListOf<TabListApi>()
-    private val loggerApis = mutableListOf<LoggerApi>()
-    private val hudApis = mutableListOf<HudApi>()
+    private val sessions = mutableListOf<ApiSession>()
 
     fun register(session: ApiSession) {
-        chatApis.add(session.chat)
-        playerApis.add(session.player)
-        worldApis.add(session.world)
-        tabListApis.add(session.tabList)
-        loggerApis.add(session.logger)
-        hudApis.add(session.hud)
+        sessions.add(session)
     }
 
     fun unregister(session: ApiSession) {
-        chatApis.remove(session.chat)
-        playerApis.remove(session.player)
-        worldApis.remove(session.world)
-        tabListApis.remove(session.tabList)
-        loggerApis.remove(session.logger)
-        hudApis.remove(session.hud)
+        sessions.remove(session)
         session.dispose()
     }
 
     fun clearAll() {
-        chatApis.toList().forEach { it.dispose() }
-        playerApis.toList().forEach { it.dispose() }
-        worldApis.toList().forEach { it.dispose() }
-        tabListApis.toList().forEach { it.dispose() }
-        loggerApis.toList().forEach { it.dispose() }
-        hudApis.toList().forEach { it.dispose() }
-        chatApis.clear()
-        playerApis.clear()
-        worldApis.clear()
-        tabListApis.clear()
-        loggerApis.clear()
-        hudApis.clear()
+        sessions.toList().forEach { it.dispose() }
+        sessions.clear()
     }
 
     // ---------- Fabric event registration (called once at mod init) ----------
@@ -87,44 +59,44 @@ object ApiBridge {
 
     private fun registerChatReceived() {
         ClientReceiveMessageEvents.CHAT.register { message, _, _, _, _ ->
-            chatApis.forEach { it.fire("chatReceived", LuaValue.valueOf(message.string)) }
+            sessions.forEach { it.chat.fire("chatReceived", LuaValue.valueOf(message.string)) }
         }
     }
 
     private fun registerGameReceived() {
         ClientReceiveMessageEvents.GAME.register { message, overlay ->
-            chatApis.forEach { it.fire("gameReceived", LuaValue.valueOf(message.string), LuaValue.valueOf(overlay)) }
+            sessions.forEach { it.chat.fire("gameReceived", LuaValue.valueOf(message.string), LuaValue.valueOf(overlay)) }
         }
     }
 
     private fun registerAllowChatReceived() {
         ClientReceiveMessageEvents.ALLOW_CHAT.register { message, _, _, _, _ ->
-            chatApis.all { it.fireAll("allowChatReceived", LuaValue.valueOf(message.string)) }
+            sessions.all { it.chat.fireAll("allowChatReceived", LuaValue.valueOf(message.string)) }
         }
     }
 
     private fun registerAllowGameReceived() {
         ClientReceiveMessageEvents.ALLOW_GAME.register { message, overlay ->
-            chatApis.all { it.fireAll("allowGameReceived", LuaValue.valueOf(message.string), LuaValue.valueOf(overlay)) }
+            sessions.all { it.chat.fireAll("allowGameReceived", LuaValue.valueOf(message.string), LuaValue.valueOf(overlay)) }
         }
     }
 
     private fun registerAllowChatSent() {
         ClientSendMessageEvents.ALLOW_CHAT.register { message ->
-            chatApis.all { it.fireAll("allowChatSent", LuaValue.valueOf(message)) }
+            sessions.all { it.chat.fireAll("allowChatSent", LuaValue.valueOf(message)) }
         }
     }
 
     private fun registerAllowCommandSent() {
         ClientSendMessageEvents.ALLOW_COMMAND.register { message ->
-            chatApis.all { it.fireAll("allowCommandSent", LuaValue.valueOf(message)) }
+            sessions.all { it.chat.fireAll("allowCommandSent", LuaValue.valueOf(message)) }
         }
     }
 
     private fun registerModifyChatSent() {
         ClientSendMessageEvents.MODIFY_CHAT.register { message ->
             var result = message
-            chatApis.forEach { result = it.fireModify("modifyChatSent", result) }
+            sessions.forEach { result = it.chat.fireModify("modifyChatSent", result) }
             result
         }
     }
@@ -132,20 +104,20 @@ object ApiBridge {
     private fun registerModifyCommandSent() {
         ClientSendMessageEvents.MODIFY_COMMAND.register { message ->
             var result = message
-            chatApis.forEach { result = it.fireModify("modifyCommandSent", result) }
+            sessions.forEach { result = it.chat.fireModify("modifyCommandSent", result) }
             result
         }
     }
 
     private fun registerChatSent() {
         ClientSendMessageEvents.CHAT.register { message ->
-            chatApis.forEach { it.fire("chatSent", LuaValue.valueOf(message)) }
+            sessions.forEach { it.chat.fire("chatSent", LuaValue.valueOf(message)) }
         }
     }
 
     private fun registerCommandSent() {
         ClientSendMessageEvents.COMMAND.register { message ->
-            chatApis.forEach { it.fire("commandSent", LuaValue.valueOf(message)) }
+            sessions.forEach { it.chat.fire("commandSent", LuaValue.valueOf(message)) }
         }
     }
 
@@ -153,10 +125,10 @@ object ApiBridge {
 
     private fun registerWorldTick() {
         ClientTickEvents.START_WORLD_TICK.register { _ ->
-            worldApis.forEach { it.fire("tickStarted") }
+            sessions.forEach { it.world.fire("tickStarted") }
         }
         ClientTickEvents.END_WORLD_TICK.register { _ ->
-            worldApis.forEach { it.fire("tickEnded") }
+            sessions.forEach { it.world.fire("tickEnded") }
         }
     }
 
@@ -165,11 +137,11 @@ object ApiBridge {
     private fun registerClientTick() {
         ClientTickEvents.START_CLIENT_TICK.register { _ ->
             var shouldMine = false
-            playerApis.forEach { if (it.blockAttackingStatus) shouldMine = true }
+            sessions.forEach { if (it.player.blockAttackingStatus) shouldMine = true }
             if (shouldMine) {
                 MinecraftClient.getInstance().handleBlockBreaking(true)
             }
-            playerApis.forEach { it.fire("clientTick") }
+            sessions.forEach { it.player.fire("clientTick") }
         }
     }
 
@@ -177,12 +149,12 @@ object ApiBridge {
 
     @JvmStatic
     fun onPlayerDamaged(damageSource: DamageSource) {
-        playerApis.forEach { it.fire("damaged", damageSource.toLuaTable()) }
+        sessions.forEach { it.player.fire("damaged", damageSource.toLuaTable()) }
     }
 
     @JvmStatic
     fun onPlayerDeath(damageSource: DamageSource) {
-        playerApis.forEach { it.fire("death", damageSource.toLuaTable()) }
+        sessions.forEach { it.player.fire("death", damageSource.toLuaTable()) }
     }
 
     // ---- Called by mixin (ClientPlayerNetworkHandlerMixin) ----
@@ -194,15 +166,17 @@ object ApiBridge {
         entry: PlayerListEntry
     ) {
         var current = entry
-        tabListApis.forEach { api ->
-            current = api.firePlayerListEntryModified(entries, index, current)
+        for (session in sessions) {
+            val sizeBefore = entries.size
+            current = session.tabList.firePlayerListEntryModified(entries, index, current)
+            if (entries.size != sizeBefore) return  // entry removed — stop chaining
         }
     }
-    
+
     // ---- Called by mixin (InGameHudMixin) ----
-    
+
     @JvmStatic
     fun onHudRendered(context: DrawContext, tickCounter: RenderTickCounter) {
-        hudApis.forEach { it.fireHudRendered( context, tickCounter) }
+        sessions.forEach { it.hud.fireHudRendered(context, tickCounter) }
     }
 }
