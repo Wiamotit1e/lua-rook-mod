@@ -29,7 +29,7 @@ object ErrorReporter {
         if (last != null && now - last < RATE_LIMIT_MS) return
 
         lastReport[key] = now
-        val shortMsg = error.message ?: error.javaClass.simpleName
+        val shortMsg = error.stackTraceToString()
         sendToChat("§c$scriptName.lua §8[$context] §7— §c$shortMsg")
     }
 
