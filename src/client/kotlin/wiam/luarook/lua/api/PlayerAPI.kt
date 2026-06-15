@@ -42,9 +42,12 @@ class PlayerApi : LuaApi("player") {
             }
             table
         }
+        t.fn0("getCrosshairTarget") {
+            return@fn0 mc.crosshairTarget?.toLuaTable() ?: LuaTable()
+        }
         t.fn0("getSelectedSlot") {
             val slot = mc.player?.inventory?.selectedSlot ?: return@fn0 NIL
-            LuaInteger.valueOf(36 + slot)
+            LuaInteger.valueOf(slot)
         }
         t.fn3("clickSlot") { slotId, button, actionType ->
             val syncId = mc.player?.playerScreenHandler?.syncId ?: return@fn3 NIL

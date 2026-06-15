@@ -7,3 +7,5 @@ accessible method net/minecraft/client/MinecraftClient doItemUse ()V
 accessible method net/minecraft/client/MinecraftClient handleBlockBreaking (Z)V
 
 accessible method net/minecraft/client/network/PlayerListEntry setLatency (I)V
+
+accessible field net/minecraft/client/gui/screen/ingame/HandledScreen focusedSlot Lnet/minecraft/screen/slot/Slot;

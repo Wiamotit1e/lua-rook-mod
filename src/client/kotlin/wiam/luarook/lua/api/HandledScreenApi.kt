@@ -18,7 +18,9 @@ class HandledScreenApi : LuaApi("handledScreen") {
     
     private val interactionManager get() = mc.interactionManager
     
-    private val screenHandler get() = (mc.currentScreen as? HandledScreen<*>)?.screenHandler
+    private val handledScreen get() = (mc.currentScreen as? HandledScreen<*>)
+    
+    private val screenHandler get() = handledScreen?.screenHandler
     override fun register(t: LuaTable) {
         t.fn0("getSyncId") {
             val screen = mc.currentScreen
@@ -42,6 +44,10 @@ class HandledScreenApi : LuaApi("handledScreen") {
             }
             table
         }
+        t.fn0("getFocusedSlotIndex") {
+            val slot = handledScreen?.focusedSlot ?: return@fn0 NIL
+            return@fn0 LuaValue.valueOf(slot.index)
+        }
         t.fn0("getEnchantmentButtons") {
             val table = LuaTable()
             val screen = mc.currentScreen
@@ -55,7 +61,7 @@ class HandledScreenApi : LuaApi("handledScreen") {
                     table.set(
                         i,
                         LuaTable().apply {
-                            set("enchantment", LuaValue.valueOf(enchantmentName ?: "unknown"))
+                            set("name", LuaValue.valueOf(enchantmentName ?: "unknown"))
                             set("level", enchantmentLevel)
                         })
                 }
