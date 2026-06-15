@@ -1,9 +1,9 @@
 package wiam.luarook.lua.api
 
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gui.screen.ingame.EnchantmentScreen
 import net.minecraft.client.gui.screen.ingame.HandledScreen
 import net.minecraft.registry.RegistryKeys
+import net.minecraft.screen.EnchantmentScreenHandler
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.LuaValue.NIL
@@ -44,28 +44,25 @@ class HandledScreenApi : LuaApi("handledScreen") {
             }
             table
         }
-        t.fn0("getFocusedSlotIndex") {
+        t.fn0("getFocusedSlotId") {
             val slot = handledScreen?.focusedSlot ?: return@fn0 NIL
-            return@fn0 LuaValue.valueOf(slot.index)
+            return@fn0 LuaValue.valueOf(slot.id)
         }
         t.fn0("getEnchantmentButtons") {
             val table = LuaTable()
-            val screen = mc.currentScreen
-            if (screen is EnchantmentScreen) {
-                for (i in 0..2) {
-                    val enchantmentId = screen.screenHandler!!.enchantmentId[i]
-                    val enchantmentName =
-                        mc.world?.registryManager?.getOrThrow(RegistryKeys.ENCHANTMENT)?.get(enchantmentId)
-                            ?.description()?.string
-                    val enchantmentLevel = screen.screenHandler!!.enchantmentLevel[i]
-                    table.set(
-                        i,
-                        LuaTable().apply {
-                            set("name", LuaValue.valueOf(enchantmentName ?: "unknown"))
-                            set("level", enchantmentLevel)
-                        })
-                }
-                return@fn0 table
+            val v1 = screenHandler as? EnchantmentScreenHandler ?: return@fn0 table
+            for (i in 0..2) {
+                val enchantmentId = v1.enchantmentId[i]
+                val enchantmentIdName =
+                    mc.world?.registryManager?.getOrThrow(RegistryKeys.ENCHANTMENT)?.getEntry(enchantmentId)
+                        ?.orElse(null)?.idAsString ?: "unknown"
+                val enchantmentLevel = v1.enchantmentLevel[i]
+                table.set(
+                    i,
+                    LuaTable().apply {
+                        set("id", LuaValue.valueOf(enchantmentIdName))
+                        set("level", enchantmentLevel)
+                    })
             }
             return@fn0 table
         }

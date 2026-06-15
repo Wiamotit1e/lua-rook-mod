@@ -20,7 +20,7 @@ fun ItemStack.toLuaTable(): LuaTable {
     var index = 1
     this.enchantments.enchantmentEntries.forEach {
         val enchantment: LuaTable = LuaTable().apply {
-            set("name", LuaValue.valueOf(it.key.value().description.string))
+            set("id", LuaValue.valueOf(it.key.idAsString))
             set("level", LuaValue.valueOf(it.intValue))
         }
         enchantments.set(index, enchantment)

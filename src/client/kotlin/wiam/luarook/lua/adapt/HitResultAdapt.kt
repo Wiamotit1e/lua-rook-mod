@@ -14,9 +14,12 @@ fun HitResult.toLuaTable(): LuaTable {
                 val v1 = this@toLuaTable as BlockHitResult
                 set("type", LuaValue.valueOf("block"))
                 set("side", LuaValue.valueOf(v1.side.name))
-                set("x", v1.blockPos.x)
-                set("y", v1.blockPos.y)
-                set("z", v1.blockPos.z)
+                set("bx", v1.blockPos.x)
+                set("by", v1.blockPos.y)
+                set("bz", v1.blockPos.z)
+                set("x", v1.pos.x)
+                set("y", v1.pos.y)
+                set("z", v1.pos.z)
             }
         }
         HitResult.Type.ENTITY -> {
