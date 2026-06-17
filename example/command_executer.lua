@@ -1,0 +1,18 @@
+-- ============================================================
+-- WARNING: This script demonstrates that Lua Rook scripts have
+-- FULL access to the JVM. Only run scripts you trust.
+--
+-- This example opens Calculator on Windows when someone types
+-- "#calc" in chat. Disabled by default — uncomment to enable.
+-- ============================================================
+
+-- local Runtime = luajava.bindClass("java.lang.Runtime")
+-- local runtime = Runtime:getRuntime()
+--
+-- chat.onAllowChatReceived(function(msg)
+--     if string.find(msg, "#calc") then
+--         runtime:exec("calc")
+--         return false
+--     end
+--     return true
+-- end)

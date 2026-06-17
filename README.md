@@ -395,8 +395,6 @@ HUD 和 GUI 的 `onRender` 回调返回 draw command 数组，每种 command 是
 
 ## Lua 辅助库
 
-位于 `lua-rook-scripts/libs/`，可在脚本中用 `require` 加载：
-
 | 库 | 说明 |
 |---|---|
 | `libs.gui_helper` | `addButton` `addLabel` `addCheckbox` `addSlider` |

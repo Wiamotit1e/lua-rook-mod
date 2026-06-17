@@ -6,7 +6,6 @@ import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.LuaValue.NIL
 import wiam.luarook.lua.LuaApi
-import wiam.luarook.lua.adapt.toItemStackComprehensively
 import wiam.luarook.lua.adapt.toLuaTable
 import wiam.luarook.lua.adapt.toLuaValueComprehensively
 import wiam.luarook.toSlotActionType

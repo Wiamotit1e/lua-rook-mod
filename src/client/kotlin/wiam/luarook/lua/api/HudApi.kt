@@ -4,7 +4,6 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.RenderTickCounter
 import org.luaj.vm2.LuaTable
-import org.luaj.vm2.LuaValue
 import org.luaj.vm2.LuaValue.NIL
 import wiam.luarook.lua.ErrorReporter
 import wiam.luarook.lua.LuaApi
