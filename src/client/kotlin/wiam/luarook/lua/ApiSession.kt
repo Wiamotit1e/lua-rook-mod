@@ -5,6 +5,7 @@ import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.lib.jse.JsePlatform
 import wiam.luarook.lua.api.ChatApi
+import wiam.luarook.lua.api.GuiApi
 import wiam.luarook.lua.api.HandledScreenApi
 import wiam.luarook.lua.api.HudApi
 import wiam.luarook.lua.api.LoggerApi
@@ -25,10 +26,11 @@ class ApiSession(val name: String) {
     val logger = LoggerApi()
     val hud = HudApi()
     val handledScreen = HandledScreenApi()
+    val gui = GuiApi()
     val globals: Globals = createRegularGlobals()
-    
+
     /** All API instances in registration order. Add new APIs here. */
-    private val all: List<LuaApi> = listOf(chat, player, world, tabList, logger, hud, handledScreen)
+    private val all: List<LuaApi> = listOf(chat, player, world, tabList, logger, hud, handledScreen, gui)
     
     init {
         for (api in all) {
