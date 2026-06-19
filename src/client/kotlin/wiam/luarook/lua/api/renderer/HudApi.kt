@@ -1,4 +1,4 @@
-package wiam.luarook.lua.api
+package wiam.luarook.lua.api.renderer
 
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext

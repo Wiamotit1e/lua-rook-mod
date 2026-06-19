@@ -63,5 +63,6 @@ class WorldApi : LuaApi("world") {
         }
         t.event("tickStarted")
         t.event("tickEnded")
+        t.event("entityStatusPacketReceived")
     }
 }

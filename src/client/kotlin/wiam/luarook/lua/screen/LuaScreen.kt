@@ -7,12 +7,11 @@ import net.minecraft.client.input.KeyInput
 import net.minecraft.text.Text
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
-import org.luaj.vm2.LuaValue.NIL
 import wiam.luarook.lua.ErrorReporter
 import wiam.luarook.lua.adapt.drawing.drawWith
 import wiam.luarook.lua.adapt.drawing.toLuaTable
 import wiam.luarook.lua.adapt.text.toMutableText
-import wiam.luarook.lua.api.GuiApi
+import wiam.luarook.lua.api.renderer.GuiApi
 
 /**
  * A Minecraft [Screen] whose behavior and widgets are driven entirely by Lua.

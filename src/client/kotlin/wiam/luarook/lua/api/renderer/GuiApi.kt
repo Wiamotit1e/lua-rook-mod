@@ -1,4 +1,4 @@
-package wiam.luarook.lua.api
+package wiam.luarook.lua.api.renderer
 
 import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
@@ -145,7 +145,7 @@ class GuiApi : LuaApi("gui") {
                 val config = lastArg(args)
                 if (config is LuaTable) {
                     val id = screen.addWidget(config)
-                    return LuaValue.valueOf(id)
+                    return valueOf(id)
                 }
                 return NIL
             }

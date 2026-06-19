@@ -2,9 +2,11 @@ package wiam.luarook.mixin.client;
 
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.network.packet.s2c.play.EntityStatusS2CPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import wiam.luarook.lua.ApiBridge;
 
@@ -22,5 +24,10 @@ public class ClientPlayerNetworkHandlerMixin {
             ApiBridge.onPlayerListEntriesModified(entries, i, entries.get(i));
         }
         cir.setReturnValue(entries);
+    }
+
+    @Inject(method = "onEntityStatus", at = @At("TAIL"))
+    public void wiam$onEntityStatus(EntityStatusS2CPacket packet, CallbackInfo ci) {
+        ApiBridge.onEntityStatusPacketReceived(packet);
     }
 }
