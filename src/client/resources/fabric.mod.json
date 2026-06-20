@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "lua-rook",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"name": "Lua Rook",
 	"description": "This is a client side mod used to load lua script with given api to implement your own feature.",
 	"authors": [
