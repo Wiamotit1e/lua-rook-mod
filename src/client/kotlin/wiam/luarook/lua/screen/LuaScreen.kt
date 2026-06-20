@@ -12,6 +12,7 @@ import wiam.luarook.lua.adapt.drawing.drawWith
 import wiam.luarook.lua.adapt.drawing.toLuaTable
 import wiam.luarook.lua.adapt.text.toMutableText
 import wiam.luarook.lua.api.renderer.GuiApi
+import wiam.luarook.lua.invoke4
 
 /**
  * A Minecraft [Screen] whose behavior and widgets are driven entirely by Lua.
@@ -64,8 +65,7 @@ class LuaScreen(
         val cb = onRenderCallback ?: return
 
         try {
-            val result = LuaWidget.invoke4(
-                cb,
+            val result = cb.invoke4(
                 context.toLuaTable(),
                 LuaValue.valueOf(mouseX),
                 LuaValue.valueOf(mouseY),

@@ -5,6 +5,7 @@
   "client": [
     "ClientPlayerNetworkHandlerMixin",
     "InGameHudMixin",
+    "KeyboardInputMixin",
     "LivingEntityMixin"
   ],
   "injectors": {

@@ -6,6 +6,7 @@ import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.LuaValue.NIL
 import wiam.luarook.lua.LuaApi
+import wiam.luarook.lua.LuaInputOverride
 import wiam.luarook.lua.adapt.toLuaTable
 import wiam.luarook.lua.adapt.toLuaValueComprehensively
 import wiam.luarook.toSlotActionType
@@ -27,6 +28,22 @@ class PlayerApi : LuaApi("player") {
         t.fn1("setPitch") { mc.player?.pitch = it.todouble().toFloat(); NIL }
         t.fn1("setYaw")   { mc.player?.yaw = it.todouble().toFloat(); NIL }
         t.fn1("setBlockAttacking") { blockAttackingStatus = it.toboolean(); NIL }
+        t.fn1("setInput") {
+            if (it.istable()) {
+                val t = it as LuaTable
+                LuaInputOverride.set(
+                    t.optBooleanOrNull("forward"),
+                    t.optBooleanOrNull("backward"),
+                    t.optBooleanOrNull("left"),
+                    t.optBooleanOrNull("right"),
+                    t.optBooleanOrNull("jump"),
+                    t.optBooleanOrNull("sneak"),
+                    t.optBooleanOrNull("sprint"),
+                )
+            }
+            NIL
+        }
+        t.fn0("clearInput") { LuaInputOverride.clear(); NIL }
         t.fn0("getInventoryStacks") {
             val table = LuaTable()
             val slots = mc.player?.playerScreenHandler?.slots ?: return@fn0 table
@@ -59,5 +76,15 @@ class PlayerApi : LuaApi("player") {
         t.event("damaged")
         t.event("death")
         t.event("clientTick")
+    }
+
+    override fun dispose() {
+        LuaInputOverride.clear()
+        super.dispose()
+    }
+    
+    private fun LuaTable.optBooleanOrNull(key: String): Boolean? {
+        val v = get(key)
+        return if (v == NIL) null else v.toboolean()
     }
 }

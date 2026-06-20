@@ -95,6 +95,12 @@ player.clickSlot(slotId, button, "PICKUP")  -- actionType: PICKUP/QUICK_MOVE/SWA
 -- 持续挖掘（set true 开始，set false 停止）
 player.setBlockAttacking(true)
 
+-- 移动控制
+player.setInput({ forward = true })           -- 按住 W
+player.setInput({ forward = true, jump = true })  -- W + 跳
+player.setInput({ left = true })              -- 按住 A
+player.clearInput()                           -- 释放所有 Lua 控制的键
+
 -- 事件
 player.onDamaged(function(source) end)  -- source.type, source.attacker, ...
 player.onDeath(function(source) end)
@@ -260,6 +266,45 @@ logger.info("MyScript", "something happened")
 logger.warn("MyScript", "warning message")
 logger.error("MyScript", "error message")
 ```
+
+### sound — 声音
+
+```lua
+-- 简单播放（默认 ambient 分类，全音量无衰减，所有参数默认即可）
+sound.play("block.anvil.land")
+sound.play("entity.creeper.primed")
+sound.play("ui.button.click")
+
+-- 带参数表播放
+sound.play({
+    id = "block.anvil.land",
+    category = "blocks",       -- "master" | "music" | "records" | "weather" | "blocks" |
+                               -- "hostile" | "neutral" | "players" | "ambient" | "voice" | "ui"
+    volume = 0.8,              -- 0.0 ~ 1.0，默认 1.0
+    pitch = 1.2,               -- 0.5 ~ 2.0，默认 1.0
+    x = 100, y = 64, z = 100,  -- 位置，默认 0,0,0
+    attenuation = "linear",    -- "none"（无衰减）| "linear"（线性衰减），默认 "none"
+    repeat = false,            -- 是否循环，默认 false
+    repeatDelay = 0,           -- 循环间隔 tick，默认 0
+    relative = true,           -- 相对播放，默认 false
+})
+```
+
+参数说明：
+
+| 参数 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `id` | string | **必填** | 声音标识符，如 `"block.anvil.land"` |
+| `category` | string | `"ambient"` | 声音分类，对应音量设置中的滑块 |
+| `volume` | number | `1.0` | 音量倍率 (0.0 ~ 1.0) |
+| `pitch` | number | `1.0` | 音调倍率 (0.5 ~ 2.0) |
+| `x` | number | `0` | 声音源 X 坐标 |
+| `y` | number | `0` | 声音源 Y 坐标 |
+| `z` | number | `0` | 声音源 Z 坐标 |
+| `attenuation` | string | `"none"` | 距离衰减模式 |
+| `repeat` | boolean | `false` | 是否循环播放 |
+| `repeatDelay` | int | `0` | 循环间隔（tick） |
+| `relative` | boolean | `false` | 是否相对听者位置 |
 
 ## Entity Statuses
 

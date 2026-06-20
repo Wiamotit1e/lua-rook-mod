@@ -10,6 +10,7 @@ import wiam.luarook.lua.api.HandledScreenApi
 import wiam.luarook.lua.api.renderer.HudApi
 import wiam.luarook.lua.api.LoggerApi
 import wiam.luarook.lua.api.PlayerApi
+import wiam.luarook.lua.api.SoundApi
 import wiam.luarook.lua.api.TabListApi
 import wiam.luarook.lua.api.WorldApi
 import wiam.luarook.lua.api.renderer.CameraApi
@@ -29,10 +30,11 @@ class ApiSession(val name: String) {
     val handledScreen = HandledScreenApi()
     val gui = GuiApi()
     val camera = CameraApi()
+    val sound = SoundApi()
     val globals: Globals = createRegularGlobals()
 
     /** All API instances in registration order. Add new APIs here. */
-    private val all: List<LuaApi> = listOf(chat, player, world, tabList, logger, hud, handledScreen, gui, camera)
+    private val all: List<LuaApi> = listOf(chat, player, world, tabList, logger, hud, handledScreen, gui, camera, sound)
     
     init {
         for (api in all) {

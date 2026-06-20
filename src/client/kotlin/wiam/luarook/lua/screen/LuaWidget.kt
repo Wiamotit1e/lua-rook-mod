@@ -8,11 +8,11 @@ import net.minecraft.client.input.KeyInput
 import net.minecraft.text.Text
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
-import org.luaj.vm2.LuaValue.NIL
-import org.luaj.vm2.Varargs
 import wiam.luarook.lua.ErrorReporter
 import wiam.luarook.lua.adapt.drawing.drawWith
 import wiam.luarook.lua.adapt.drawing.toLuaTable
+import wiam.luarook.lua.invoke4
+import wiam.luarook.lua.invoke5
 
 /**
  * A general-purpose widget that delegates all events to Lua callbacks.
@@ -50,13 +50,13 @@ class LuaWidget(
     private val interactive: Boolean,
     private val scriptName: String
 ) : ClickableWidget(x, y, width, height, message) {
-
+    
     init {
         active = interactive
     }
-
+    
     // ---- Mouse events ----
-
+    
     override fun onClick(click: Click?, doubled: Boolean) {
         val cb = onClickCallback ?: return
         try {
@@ -69,7 +69,7 @@ class LuaWidget(
             ErrorReporter.reportRuntimeError(scriptName, "gui.widget.onClick", e)
         }
     }
-
+    
     override fun mouseMoved(mouseX: Double, mouseY: Double) {
         super.mouseMoved(mouseX, mouseY)
         val cb = onMouseMovedCallback ?: return
@@ -79,7 +79,7 @@ class LuaWidget(
             // silently ignore — mouse-move is too frequent for chat spam
         }
     }
-
+    
     override fun mouseReleased(click: Click?): Boolean {
         val cb = onMouseReleasedCallback ?: return super.mouseReleased(click)
         try {
@@ -92,43 +92,33 @@ class LuaWidget(
             return false
         }
     }
-
+    
     override fun mouseDragged(click: Click?, offsetX: Double, offsetY: Double): Boolean {
         val cb = onMouseDraggedCallback ?: return super.mouseDragged(click, offsetX, offsetY)
         try {
             val x = click?.x ?: 0.0
             val y = click?.y ?: 0.0
             val btn = click?.button()?.toDouble() ?: 0.0
-            val args = LuaValue.varargsOf(
-                LuaValue.valueOf(x),
-                LuaValue.varargsOf(
-                    LuaValue.valueOf(y),
-                    LuaValue.varargsOf(
-                        LuaValue.valueOf(offsetX),
-                        LuaValue.varargsOf(
-                            LuaValue.valueOf(offsetY),
-                            LuaValue.varargsOf(LuaValue.valueOf(btn), NIL)
-                        )
-                    )
-                )
-            )
-            return cb.invoke(args).arg1().toboolean()
+            return cb.invoke5(
+                LuaValue.valueOf(x), LuaValue.valueOf(y), LuaValue.valueOf(offsetX),
+                LuaValue.valueOf(offsetY), LuaValue.valueOf(btn)
+            ).arg1().toboolean()
         } catch (e: Exception) {
             ErrorReporter.reportRuntimeError(scriptName, "gui.widget.mouseDragged", e)
             return false
         }
     }
-
+    
     override fun mouseScrolled(
         mouseX: Double, mouseY: Double,
         horizontalAmount: Double, verticalAmount: Double
     ): Boolean {
         val cb = onMouseScrolledCallback ?: return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
         try {
-            val result = invoke4(
-                cb,
-                LuaValue.valueOf(mouseX), LuaValue.valueOf(mouseY),
-                LuaValue.valueOf(horizontalAmount), LuaValue.valueOf(verticalAmount)
+            val result = cb.invoke4(
+                LuaValue.valueOf(mouseX),
+                LuaValue.valueOf(mouseY), LuaValue.valueOf(horizontalAmount),
+                LuaValue.valueOf(verticalAmount)
             )
             return result.toboolean()
         } catch (e: Exception) {
@@ -136,45 +126,39 @@ class LuaWidget(
             return false
         }
     }
-
+    
     // ---- Keyboard events ----
-
+    
     override fun keyPressed(input: KeyInput?): Boolean {
         if (input == null) return false
         val cb = onKeyPressedCallback ?: return false
         try {
-            val args = LuaValue.varargsOf(
+            return cb.call(
                 LuaValue.valueOf(input.key),
-                LuaValue.varargsOf(
-                    LuaValue.valueOf(input.scancode),
-                    LuaValue.varargsOf(LuaValue.valueOf(input.modifiers), NIL)
-                )
-            )
-            return cb.invoke(args).arg1().toboolean()
+                LuaValue.valueOf(input.scancode),
+                LuaValue.valueOf(input.modifiers)
+            ).arg1().toboolean()
         } catch (e: Exception) {
             ErrorReporter.reportRuntimeError(scriptName, "gui.widget.keyPressed", e)
             return false
         }
     }
-
+    
     override fun keyReleased(input: KeyInput?): Boolean {
         if (input == null) return false
         val cb = onKeyReleasedCallback ?: return false
         try {
-            val args = LuaValue.varargsOf(
+            return cb.call(
                 LuaValue.valueOf(input.key),
-                LuaValue.varargsOf(
-                    LuaValue.valueOf(input.scancode),
-                    LuaValue.varargsOf(LuaValue.valueOf(input.modifiers), NIL)
-                )
-            )
-            return cb.invoke(args).arg1().toboolean()
+                LuaValue.valueOf(input.scancode),
+                LuaValue.valueOf(input.modifiers)
+            ).arg1().toboolean()
         } catch (e: Exception) {
             ErrorReporter.reportRuntimeError(scriptName, "gui.widget.keyReleased", e)
             return false
         }
     }
-
+    
     override fun charTyped(input: CharInput?): Boolean {
         if (input == null) return false
         val cb = onCharTypedCallback ?: return false
@@ -188,15 +172,14 @@ class LuaWidget(
             return false
         }
     }
-
+    
     // ---- Rendering ----
-
+    
     override fun renderWidget(context: DrawContext?, mouseX: Int, mouseY: Int, delta: Float) {
         if (context == null) return
         val cb = onRenderCallback ?: return
         try {
-            val result = invoke4(
-                cb,
+            val result = cb.invoke4(
                 context.toLuaTable(),
                 LuaValue.valueOf(mouseX),
                 LuaValue.valueOf(mouseY),
@@ -207,20 +190,10 @@ class LuaWidget(
             ErrorReporter.reportRuntimeError(scriptName, "gui.widget.render", e)
         }
     }
-
+    
     override fun appendClickableNarrations(
         builder: net.minecraft.client.gui.screen.narration.NarrationMessageBuilder?
     ) {
         appendDefaultNarrations(builder)
-    }
-
-    companion object {
-        /** Call a Lua function with 4 args (LuaJ [LuaValue.call] only supports 0–3). */
-        fun invoke4(fn: LuaValue, a1: LuaValue, a2: LuaValue, a3: LuaValue, a4: LuaValue): LuaValue {
-            val tail = LuaValue.varargsOf(a4, NIL)
-            val mid = LuaValue.varargsOf(a3, tail)
-            val head = LuaValue.varargsOf(a2, mid)
-            return fn.invoke(LuaValue.varargsOf(a1, head)).arg1()
-        }
     }
 }
