@@ -48,6 +48,12 @@ class WorldApi : LuaApi("world") {
         t.fn0("isInHandledScreen") {
             return@fn0 if (mc.currentScreen is HandledScreen<*>) LuaValue.TRUE else LuaValue.FALSE
         }
+        t.fn0("getBossBars") {
+            val v1 = mc.inGameHud.bossBarHud.bossBars
+            val table = LuaTable()
+            v1.forEach { (uuid, bossBar) -> table.set(uuid.toString(), bossBar.toLuaTable())}
+            table
+        }
         t.fn1("logOut") { reason ->
             mc.execute { mc.disconnect(Text.of(reason.tojstring())) }
             NIL

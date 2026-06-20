@@ -128,6 +128,13 @@ local state = world.getBlockState(x, y, z)  -- 完整 block state
 -- 登出
 world.logOut("reason")
 
+-- BossBar
+local bars = world.getBossBars()
+for uuid, bar in pairs(bars) do
+    -- bar.name (Text), bar.percent (0~1), bar.color, bar.style
+    -- bar.darkenSky, bar.dragonMusic, bar.thickenFog (boolean)
+end
+
 -- GUI 状态
 if world.isInScreen() then ... end
 if world.isInHandledScreen() then ... end
