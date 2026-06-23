@@ -3,7 +3,9 @@ package wiam.luarook.lua.api
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.screen.ingame.HandledScreen
 import net.minecraft.registry.RegistryKeys
+import net.minecraft.screen.AnvilScreenHandler
 import net.minecraft.screen.EnchantmentScreenHandler
+import net.minecraft.screen.MerchantScreenHandler
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.LuaValue.NIL
@@ -65,6 +67,27 @@ class HandledScreenApi : LuaApi("handledScreen") {
                     })
             }
             return@fn0 table
+        }
+        t.fn0("getTradeOffers") {
+            val table = LuaTable()
+            val v1 = screenHandler as? MerchantScreenHandler ?: return@fn0 table
+            val v2 = v1.recipes
+            for (i in v2.indices) {
+                table.set(i, v2[i].toLuaTable())
+            }
+            return@fn0 table
+        }
+        t.fn1("setRecipeIndex") {
+            val tradeOfferIndex = if (it.isint()) it.toint() else return@fn1 NIL
+            val v1 = screenHandler as? MerchantScreenHandler ?: return@fn1 NIL
+            v1.setRecipeIndex(tradeOfferIndex)
+            NIL
+        }
+        t.fn1("setNewItemName") {
+            val newItemName = if (it.isstring()) it.tojstring() else return@fn1 NIL
+            val v1 = screenHandler as? AnvilScreenHandler ?: return@fn1 NIL
+            v1.setNewItemName(newItemName)
+            NIL
         }
         t.fn3("clickSlot") { slotId, button, actionType ->
             if (screenHandler != null) {

@@ -236,14 +236,26 @@ gui.closeCurrentScreen()
 ### handledScreen — 容器屏幕
 
 ```lua
--- 适用于打开箱子/附魔台等容器界面时
+-- 适用于打开箱子/附魔台/交易等容器界面时
 local syncId = handledScreen.getSyncId()
 local slots = handledScreen.getAllSlots()
+local fullSlots = handledScreen.getAllSlotsComprehensively()  -- Codec 序列化
 local focused = handledScreen.getFocusedSlotId()
 
 -- 附魔台
 local enchantments = handledScreen.getEnchantmentButtons()
 -- { { id = "minecraft:sharpness", level = 3 }, ... }
+
+-- 铁砧
+handledScreen.setNewItemName("Enchanted Sword")  -- 重命名物品
+
+-- 村民交易
+local offers = handledScreen.getTradeOffers()
+-- { [0] = TradeOffer, [1] = TradeOffer, ... }
+for _, offer in pairs(offers) do
+    -- offer.displayedFirstBuyItem, offer.displayedSecondBuyItem, ...
+end
+handledScreen.setRecipeIndex(2)  -- 切换到第 3 个交易
 
 -- Slot 操作
 handledScreen.clickSlot(slotId, button, "PICKUP")
@@ -456,6 +468,20 @@ HUD 和 GUI 的 `onRender` 回调返回 draw command 数组，每种 command 是
 ### ItemStack Comprehensively（Codec 序列化）
 
 通过 `getInventoryStacksComprehensively()` 等方法获取，返回 JSON 字符串。
+
+### TradeOffer（村民交易）
+
+通过 `handledScreen.getTradeOffers()` 获取，仅在打开村民交易界面时可用。
+
+```lua
+{
+    displayedFirstBuyItem = ItemStack,   -- 第一个购买物品
+    displayedSecondBuyItem = ItemStack,  -- 第二个购买物品（可能为空）
+    sellItem = ItemStack,                -- 出售物品
+    uses = 0,                            -- int, 已交易次数
+    maxUses = 12,                        -- int, 最大交易次数
+}
+```
 
 ### HitResult（准星目标）
 
