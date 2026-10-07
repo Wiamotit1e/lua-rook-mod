@@ -167,16 +167,31 @@ print(m.width, m.height)
 
 ### camera — 相机
 ```lua
--- 投影（世界坐标 → 屏幕坐标）
+-- 投影（世界坐标 → NDC）
+-- x/y ∈ [-1,1]，y 向上；z 为 NDC 深度（近平面 -1，远平面 1）
+-- w 为到相机的轴向距离（格），w > 0 表示在相机前方
 local v1 = camera.project(x, y, z)
-print(v1.x, v1.y, v1.z)
+print(v1.x, v1.y, v1.z, v1.w)
 
--- 转化
-local v2 = {}
-if v1.z > 0 then
-    v2.x = v1.x / v1.z
-    v2.y = v1.y / v1.z
-end
+-- 世界坐标 → 屏幕坐标（GUI 缩放坐标，可直接用于 hud 绘制）
+local v2 = camera.worldToScreen(x, y, z)
+-- v2.x, v2.y  屏幕坐标
+-- v2.visible  在相机前方且在视锥内（可直接据此决定是否绘制）
+-- v2.inFront  仅判断是否在相机前方
+-- v2.w        到相机的轴向距离（格）
+
+-- 例：给实体画名字
+hud.onHudRendered(function(context)
+    local e = world.getEntities()[1]
+    if not e then return end
+    local p = camera.worldToScreen(e.positionX, e.positionY + 1.5, e.positionZ)
+    if p.visible then
+        return {
+            { type = "text_rendering", text = { content = "target" },
+              x = p.x, y = p.y, color = 0xFFFFFF, shadow = true },
+        }
+    end
+end)
 ```
 
 ### gui — 自定义屏幕
