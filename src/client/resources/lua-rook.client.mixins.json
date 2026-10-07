@@ -6,7 +6,8 @@
     "ClientPlayerNetworkHandlerMixin",
     "InGameHudMixin",
     "KeyboardInputMixin",
-    "LivingEntityMixin"
+    "LivingEntityMixin",
+    "MinecraftClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1

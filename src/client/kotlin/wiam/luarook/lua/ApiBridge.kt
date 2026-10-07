@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.network.PlayerListEntry
+import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.render.RenderTickCounter
 import net.minecraft.entity.damage.DamageSource
 import net.minecraft.network.packet.s2c.play.EntityStatusS2CPacket
@@ -208,6 +209,18 @@ object ApiBridge {
             LuaValue.valueOf(packet.status.toDouble())) }
     }
     
+    // ---- Called by mixin (MinecraftClientMixin) ----
+
+    /** Fired whenever a screen becomes the current one; null means no screen is open. */
+    @JvmStatic
+    fun onScreenOpened(current: Screen?) {
+        if (current == null) return
+        sessions.forEach {
+            it.gui.fireScreenOpened(current)
+            it.handledScreen.fireScreenOpened(current)
+        }
+    }
+
     // ---- Called by mixin (InGameHudMixin) ----
     
     @JvmStatic

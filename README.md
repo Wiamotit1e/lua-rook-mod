@@ -231,6 +231,22 @@ screen.clearWidgets()
 screen.open()
 screen.close()
 gui.closeCurrentScreen()
+
+-- 当前屏幕标题（任意 Screen，无屏幕时返回 nil）
+local title = gui.getScreenTitle()  -- 如 "箱子" / "Repair & Name"
+
+-- 结构化标题
+local t = gui.getScreenTitleTable()
+-- t.content  "箱子"（译文）
+-- t.key      "container.chest"（翻译 key，字面量文本无此字段）
+-- t.style    { color = ..., ... }
+-- t.siblings { [1] = { content = ..., ... }, ... }
+
+-- 屏幕打开事件（任意屏幕，含原版界面；打开完成后触发）
+gui.onScreenOpened(function(screen)
+    print(screen.name, screen.title.content)  -- ChestScreen  箱子
+end)
+-- screen 字段见「数据表结构 / Screen」
 ```
 
 ### handledScreen — 容器屏幕
@@ -260,6 +276,13 @@ handledScreen.setRecipeIndex(2)  -- 切换到第 3 个交易
 -- Slot 操作
 handledScreen.clickSlot(slotId, button, "PICKUP")
 handledScreen.clickButton(buttonId)
+
+-- 容器屏打开（只在容器界面触发，不用再轮询 isInHandledScreen）
+handledScreen.onOpened(function(screen)
+    if screen.title.key == "container.chest" then
+        -- screen.syncId 随事件一起给出，不必再调 getSyncId()
+    end
+end)
 ```
 
 ### tabList — 玩家列表
@@ -516,6 +539,7 @@ HUD 和 GUI 的 `onRender` 回调返回 draw command 数组，每种 command 是
 ```lua
 {
     content = "Hello World",      -- 翻译后的文本
+    key = "container.chest",      -- 翻译 key，仅 Translatable 文本有
     style = {
         color = { color = "red" },
         shadowColor = 0xFF000000,  -- int | nil
@@ -525,6 +549,20 @@ HUD 和 GUI 的 `onRender` 回调返回 draw command 数组，每种 command 是
     siblings = {                  -- 1-based array of Text
         { content = "suffix", style = {...}, siblings = {...} },
     },
+}
+```
+
+### Screen（屏幕）
+
+`gui.onScreenOpened` 与 `handledScreen.onOpened` 的事件参数。
+
+```lua
+{
+    name = "ChestScreen",              -- 类名（不含包名）
+    className = "net.minecraft.client.gui.screen.ingame.ChestScreen",
+    isHandledScreen = true,            -- 是否为容器屏幕
+    title = Text,                      -- 标题，见 Text（含 key，可跨语言判断）
+    syncId = 42,                       -- 仅容器屏幕
 }
 ```
 

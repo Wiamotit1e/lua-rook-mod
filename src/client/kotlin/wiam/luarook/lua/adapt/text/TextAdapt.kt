@@ -12,8 +12,10 @@ import org.luaj.vm2.LuaValue
 
 fun MutableText.toLuaTable(): LuaTable {
     val table = LuaTable()
+    val textContent = content
     table.apply {
-        set("content", if (content is TranslatableTextContent) Language.getInstance().get(string) else string)
+        set("content", if (textContent is TranslatableTextContent) Language.getInstance().get(string) else string)
+        if (textContent is TranslatableTextContent) set("key", LuaValue.valueOf(textContent.key))
         set("style", style.toLuaTable())
         set(
             "siblings",

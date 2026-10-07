@@ -1,6 +1,7 @@
 package wiam.luarook.lua.api.renderer
 
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Text
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
@@ -8,6 +9,8 @@ import org.luaj.vm2.LuaValue.NIL
 import org.luaj.vm2.Varargs
 import org.luaj.vm2.lib.VarArgFunction
 import wiam.luarook.lua.LuaApi
+import wiam.luarook.lua.adapt.gui.toLuaTable
+import wiam.luarook.lua.adapt.text.toLuaTable
 import wiam.luarook.lua.adapt.text.toMutableText
 import wiam.luarook.lua.screen.LuaScreen
 
@@ -38,6 +41,14 @@ import wiam.luarook.lua.screen.LuaScreen
  *
  * screen.open()
  * ```
+ *
+ * The screen-opened event fires after the transition completed (any screen, including
+ * vanilla ones). The argument is the screen snapshot described in
+ * [wiam.luarook.lua.adapt.gui.toLuaTable].
+ *
+ * ```lua
+ * gui.onScreenOpened(function(screen) ... end)
+ * ```
  */
 class GuiApi : LuaApi("gui") {
 
@@ -52,6 +63,24 @@ class GuiApi : LuaApi("gui") {
             mc.execute { mc.setScreen(null) }
             NIL
         }
+
+        t.fn0("getScreenTitle") {
+            val title = mc.currentScreen?.getTitle() ?: return@fn0 NIL
+            LuaValue.valueOf(title.string)
+        }
+
+        t.fn0("getScreenTitleTable") {
+            val title = mc.currentScreen?.getTitle() ?: return@fn0 NIL
+            title.copy().toLuaTable()
+        }
+
+        t.event("screenOpened")
+    }
+
+    // ---- Screen event (called by ApiBridge) ----
+
+    internal fun fireScreenOpened(screen: Screen) {
+        fire("screenOpened", screen.toLuaTable())
     }
 
     // ---- Screen lifecycle (called by LuaScreen) ----

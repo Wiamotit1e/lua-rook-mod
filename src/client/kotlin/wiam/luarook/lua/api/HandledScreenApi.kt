@@ -1,6 +1,7 @@
 package wiam.luarook.lua.api
 
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.gui.screen.ingame.HandledScreen
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.screen.AnvilScreenHandler
@@ -10,6 +11,7 @@ import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.LuaValue.NIL
 import wiam.luarook.lua.LuaApi
+import wiam.luarook.lua.adapt.gui.toLuaTable
 import wiam.luarook.lua.adapt.toLuaTable
 import wiam.luarook.lua.adapt.toLuaValueComprehensively
 import wiam.luarook.toSlotActionType
@@ -106,5 +108,13 @@ class HandledScreenApi : LuaApi("handledScreen") {
             }
             NIL
         }
+        t.event("opened")
+    }
+
+    // ---- Screen event (called by ApiBridge) ----
+
+    /** Only fires when the opened screen is a container screen. */
+    internal fun fireScreenOpened(screen: Screen) {
+        (screen as? HandledScreen<*>)?.let { fire("opened", it.toLuaTable()) }
     }
 }
